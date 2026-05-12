@@ -36,11 +36,15 @@
     </div>
     {% endif %}
 
-    <a href="/session/new" class="btn">+ Start New Session</a>
-    <a href="/projects" class="btn btn-secondary">⭐ Projects</a>
-    <a href="/gyms" class="btn btn-secondary">🏢 Gyms</a>
+    <div class="btn-row">
+        <a href="/session/new" class="btn">+ Start New Session</a>
+        <a href="/projects" class="btn btn-secondary">⭐ Projects</a>
+        <a href="/gyms" class="btn btn-secondary">🏢 Gyms</a>
+    </div>
 
     <hr>
+
+    <h2 class="section-heading">Recent Sessions</h2>
 
     {% if sessions %}
         {% for session in sessions %}
@@ -72,7 +76,10 @@
         </div>
         {% endfor %}
     {% else %}
-        <p class="muted">No sessions yet. Start one above!</p>
+        <div class="empty-state">
+            <div class="empty-state-icon">🧗</div>
+            <p>No sessions yet. Start one above to begin tracking!</p>
+        </div>
     {% endif %}
 
 </body>

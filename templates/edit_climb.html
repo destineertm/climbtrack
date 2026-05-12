@@ -10,50 +10,48 @@
 
     <form method="POST">
 
-        <label>Climb Name:</label>
-        <input type="text" name="climb_name" value="{{ climb.climb_name }}" required>
+        <div class="field">
+            <label>Climb Name</label>
+            <input type="text" name="climb_name" value="{{ climb.climb_name }}" required>
+        </div>
 
-        <br><br>
+        <div class="field">
+            <label>Discipline</label>
+            <div class="field-inline">
+                <label><input type="radio" name="discipline" value="boulder" {% if climb.discipline == 'boulder' %}checked{% endif %} onchange="updateGradeList()"> 🪨 Boulder</label>
+                <label><input type="radio" name="discipline" value="route" {% if climb.discipline == 'route' %}checked{% endif %} onchange="updateGradeList()"> 🧗 Route</label>
+            </div>
+        </div>
 
-        <label>Discipline:</label>
-        <br>
-        <label><input type="radio" name="discipline" value="boulder" {% if climb.discipline == 'boulder' %}checked{% endif %} onchange="updateGradeList()"> 🪨 Boulder</label>
-        <label><input type="radio" name="discipline" value="route" {% if climb.discipline == 'route' %}checked{% endif %} onchange="updateGradeList()"> 🧗 Route</label>
+        <div class="field">
+            <label>Grade</label>
+            <select name="grade" id="grade-select" data-current="{{ climb.grade }}"></select>
+        </div>
 
-        <br><br>
+        <div class="field">
+            <label>Attempts</label>
+            <input type="number" name="attempts" min="1" value="{{ climb.attempts }}" required>
+        </div>
 
-        <label>Grade:</label>
-        <select name="grade" id="grade-select" data-current="{{ climb.grade }}">
-            {# Populated by JS so it stays in sync with discipline #}
-        </select>
+        <div class="field">
+            <label>Result</label>
+            <select name="result">
+                {% for rt in result_types %}
+                <option value="{{ rt }}" {% if rt == climb.result %}selected{% endif %}>{{ result_labels[rt] }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-        <br><br>
-
-        <label>Attempts:</label>
-        <input type="number" name="attempts" min="1" value="{{ climb.attempts }}" required>
-
-        <br><br>
-
-        <label>Result:</label>
-        <select name="result">
-            {% for rt in result_types %}
-            <option value="{{ rt }}" {% if rt == climb.result %}selected{% endif %}>{{ result_labels[rt] }}</option>
-            {% endfor %}
-        </select>
-
-        <br><br>
-
-        <label>Notes (optional):</label>
-        <textarea name="notes" rows="3" placeholder="Beta, how it felt, what to work on next time...">{{ climb.notes or '' }}</textarea>
-
-        <br><br>
+        <div class="field">
+            <label>Notes (optional)</label>
+            <textarea name="notes" rows="3" placeholder="Beta, how it felt, what to work on next time...">{{ climb.notes or '' }}</textarea>
+        </div>
 
         <button type="submit">Save Changes</button>
 
     </form>
 
-    <br>
-    <a href="/session/{{ climb.session_id }}">← Cancel</a>
+    <p style="margin-top: 16px;"><a href="/session/{{ climb.session_id }}">← Cancel</a></p>
 
     <script>
         const boulderGrades = {{ boulder_grades | tojson }};
@@ -74,7 +72,6 @@
             });
         }
 
-        // Initial population
         updateGradeList();
     </script>
 

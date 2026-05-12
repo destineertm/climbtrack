@@ -7,9 +7,7 @@
 <body>
 
     <h1>{{ gym.name }}</h1>
-    {% if gym.is_outdoor %}
-    <p class="muted">⛰️ Outdoor</p>
-    {% endif %}
+    {% if gym.is_outdoor %}<p class="muted">⛰️ Outdoor</p>{% endif %}
 
     {% if stats.total > 0 %}
     <div class="stats-card">
@@ -38,41 +36,46 @@
     </div>
     {% endif %}
 
-    <h2 class="section-heading">Sessions ({{ sessions | length }})</h2>
+    <p class="section-heading">Sessions ({{ sessions | length }})</p>
+
     {% if sessions %}
         {% for s in sessions %}
         <div class="card">
             <h3><a href="/session/{{ s.id }}">{{ s.date.strftime('%B %d, %Y') }}</a></h3>
-            <p class="muted">
-                {% if s.session_type == 'outdoor' %}⛰️ Outdoor{% else %}🏢 Indoor{% endif %}
-                · {{ s.climbs | length }} climb(s)
-            </p>
-            {% if s.notes %}
-            <p class="muted">{{ s.notes }}</p>
-            {% endif %}
+            <div class="mini-stats">
+                <span>{% if s.session_type == 'outdoor' %}⛰️ Outdoor{% else %}🏢 Indoor{% endif %}</span>
+                <span>·</span>
+                <span>{{ s.climbs | length }} climb{% if s.climbs | length != 1 %}s{% endif %}</span>
+            </div>
+            {% if s.notes %}<p class="muted">{{ s.notes }}</p>{% endif %}
         </div>
         {% endfor %}
     {% else %}
-        <p class="muted">No sessions at this gym yet.</p>
+        <div class="empty-state">
+            <div class="empty-state-icon">📅</div>
+            <p>No sessions at this gym yet.</p>
+        </div>
     {% endif %}
 
     {% if routes %}
-    <h2 class="section-heading">Routes ({{ routes | length }})</h2>
+    <p class="section-heading">Routes ({{ routes | length }})</p>
         {% for r in routes %}
         <div class="card">
             <h3><a href="/route/{{ r.id }}">{% if r.is_project %}⭐ {% endif %}{{ r.name }}</a></h3>
-            <p class="muted">
-                {% if r.discipline == 'route' %}🧗{% else %}🪨{% endif %} {{ r.grade }}
-                · {{ r.climbs | length }} attempt(s)
-            </p>
+            <div class="mini-stats">
+                <span>{% if r.discipline == 'route' %}🧗{% else %}🪨{% endif %} {{ r.grade }}</span>
+                <span>·</span>
+                <span>{{ r.climbs | length }} attempt{% if r.climbs | length != 1 %}s{% endif %}</span>
+            </div>
         </div>
         {% endfor %}
     {% endif %}
 
-    <br>
-    <a href="/gyms">← All Gyms</a>
-    &nbsp;·&nbsp;
-    <a href="/">Dashboard</a>
+    <p style="margin-top: 16px;">
+        <a href="/gyms">← All Gyms</a>
+        &nbsp;·&nbsp;
+        <a href="/">Dashboard</a>
+    </p>
 
 </body>
 </html>

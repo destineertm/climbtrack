@@ -10,34 +10,34 @@
 
     <form method="POST">
 
-        <label>Gym / Location:</label>
-        <div class="combobox" id="gym-combobox">
-            <input type="text" id="gym-input" name="gym_name" autocomplete="off"
-                   placeholder="Click to pick a gym, or type a new one" required>
-            <button type="button" class="combobox-toggle" id="gym-toggle" aria-label="Open dropdown">▾</button>
-            <div class="combobox-list" id="gym-list"></div>
+        <div class="field">
+            <label>Gym / Location</label>
+            <div class="combobox" id="gym-combobox">
+                <input type="text" id="gym-input" name="gym_name" autocomplete="off"
+                       placeholder="Click to pick a gym, or type a new one" required>
+                <button type="button" class="combobox-toggle" id="gym-toggle" aria-label="Open dropdown">▾</button>
+                <div class="combobox-list" id="gym-list"></div>
+            </div>
         </div>
 
-        <br><br>
+        <div class="field">
+            <label>Session Type</label>
+            <div class="field-inline">
+                <label><input type="radio" name="session_type" value="indoor" checked> 🏢 Indoor</label>
+                <label><input type="radio" name="session_type" value="outdoor"> ⛰️ Outdoor</label>
+            </div>
+        </div>
 
-        <label>Session Type:</label>
-        <br>
-        <label><input type="radio" name="session_type" value="indoor" checked> 🏢 Indoor</label>
-        <label><input type="radio" name="session_type" value="outdoor"> ⛰️ Outdoor</label>
-
-        <br><br>
-
-        <label>Notes (optional):</label>
-        <input type="text" name="notes" placeholder="e.g. Feeling strong today">
-
-        <br><br>
+        <div class="field">
+            <label>Notes (optional)</label>
+            <input type="text" name="notes" placeholder="e.g. Feeling strong today">
+        </div>
 
         <button type="submit">Start Session</button>
 
     </form>
 
-    <br>
-    <a href="/">← Back to Dashboard</a>
+    <p style="margin-top: 16px;"><a href="/">← Back to Dashboard</a></p>
 
     <script>
         const gymNames = {{ existing_gyms | map(attribute='name') | list | tojson }};
@@ -72,7 +72,6 @@
                 list.appendChild(item);
             });
 
-            // "+ Create new" option, only if the typed value doesn't match exactly
             const exact = gymNames.some(n => n.toLowerCase() === q);
             if (q && !exact) {
                 const create = document.createElement('div');

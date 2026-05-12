@@ -12,9 +12,7 @@
         {% for d in gym_data %}
         <div class="card">
             <h3><a href="/gym/{{ d.gym.id }}">{{ d.gym.name }}</a></h3>
-            {% if d.gym.is_outdoor %}
-            <p class="muted">⛰️ Outdoor</p>
-            {% endif %}
+            {% if d.gym.is_outdoor %}<p class="muted">⛰️ Outdoor</p>{% endif %}
             <div class="mini-stats">
                 <span>{{ d.session_count }} session{% if d.session_count != 1 %}s{% endif %}</span>
                 <span>·</span>
@@ -28,11 +26,13 @@
         </div>
         {% endfor %}
     {% else %}
-        <p class="muted">No gyms yet. Start a session to add one!</p>
+        <div class="empty-state">
+            <div class="empty-state-icon">🏢</div>
+            <p>No gyms yet. Start a session to add one!</p>
+        </div>
     {% endif %}
 
-    <br>
-    <a href="/">← Back to Dashboard</a>
+    <p style="margin-top: 16px;"><a href="/">← Back to Dashboard</a></p>
 
 </body>
 </html>

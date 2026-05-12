@@ -6,9 +6,7 @@
 </head>
 <body>
 
-    <h1>
-        {% if route.is_project %}⭐ {% endif %}{{ route.name }}
-    </h1>
+    <h1>{% if route.is_project %}⭐ {% endif %}{{ route.name }}</h1>
     <p class="muted">
         {% if route.discipline == 'route' %}🧗{% else %}🪨{% endif %} {{ route.grade }}
         · {{ route.gym.name if route.gym else route.location }}
@@ -29,9 +27,7 @@
                 <div class="stat-value">
                     {% if best_result and best_result != 'attempt' %}
                         {{ result_labels[best_result].split(' ')[0] }}
-                    {% else %}
-                        —
-                    {% endif %}
+                    {% else %}—{% endif %}
                 </div>
                 <div class="stat-label">Best</div>
             </div>
@@ -45,15 +41,17 @@
     </div>
     {% endif %}
 
-    <form method="POST" action="/route/{{ route.id }}/toggle_project" style="display:inline">
-        <button type="submit" class="btn btn-secondary">
-            {% if route.is_project %}Remove from projects{% else %}⭐ Mark as project{% endif %}
-        </button>
-    </form>
+    <div class="btn-row">
+        <form method="POST" action="/route/{{ route.id }}/toggle_project" style="display:inline">
+            <button type="submit" class="btn btn-secondary">
+                {% if route.is_project %}Remove from projects{% else %}⭐ Mark as project{% endif %}
+            </button>
+        </form>
+    </div>
 
     <hr>
 
-    <h2 class="section-heading">Timeline</h2>
+    <p class="section-heading">Timeline</p>
 
     {% if climbs %}
         {% for climb in climbs %}
@@ -62,7 +60,7 @@
                 {{ climb.session.date.strftime('%b %d, %Y') }} · {{ climb.session.gym.name if climb.session.gym else climb.session.location }}
             </p>
             <p class="timeline-result">{{ result_labels[climb.result] }}</p>
-            <p>{{ climb.attempts }} attempt{% if climb.attempts != 1 %}s{% endif %} this session</p>
+            <p class="muted">{{ climb.attempts }} attempt{% if climb.attempts != 1 %}s{% endif %} this session</p>
             {% if climb.notes %}
             <p class="climb-notes">📝 {{ climb.notes }}</p>
             {% endif %}
@@ -73,13 +71,17 @@
         </div>
         {% endfor %}
     {% else %}
-        <p class="muted">No attempts logged yet.</p>
+        <div class="empty-state">
+            <div class="empty-state-icon">📋</div>
+            <p>No attempts logged yet.</p>
+        </div>
     {% endif %}
 
-    <br>
-    <a href="/projects">← Back to Projects</a>
-    &nbsp;·&nbsp;
-    <a href="/">Dashboard</a>
+    <p style="margin-top: 16px;">
+        <a href="/projects">← Projects</a>
+        &nbsp;·&nbsp;
+        <a href="/">Dashboard</a>
+    </p>
 
 </body>
 </html>

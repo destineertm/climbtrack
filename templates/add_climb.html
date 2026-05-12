@@ -11,61 +11,63 @@
 
     <form method="POST">
 
-        <label>Climb Name:</label>
-        <div class="autocomplete-wrap">
-            <input type="text" name="climb_name" id="climb-name-input" autocomplete="off" required>
-            <input type="hidden" name="route_id" id="route-id-input">
-            <div id="suggestions" class="suggestions"></div>
-            <p id="link-status" class="muted link-status"></p>
+        <div class="field">
+            <label>Climb Name</label>
+            <div class="autocomplete-wrap">
+                <input type="text" name="climb_name" id="climb-name-input" autocomplete="off" required>
+                <input type="hidden" name="route_id" id="route-id-input">
+                <div id="suggestions" class="suggestions"></div>
+            </div>
+            <p id="link-status" class="link-status"></p>
         </div>
 
-        <br>
+        <div class="field">
+            <label>Discipline</label>
+            <div class="field-inline">
+                <label><input type="radio" name="discipline" value="boulder" checked onchange="onDisciplineChange()"> 🪨 Boulder</label>
+                <label><input type="radio" name="discipline" value="route" onchange="onDisciplineChange()"> 🧗 Route</label>
+            </div>
+        </div>
 
-        <label>Discipline:</label>
-        <br>
-        <label><input type="radio" name="discipline" value="boulder" checked onchange="onDisciplineChange()"> 🪨 Boulder</label>
-        <label><input type="radio" name="discipline" value="route" onchange="onDisciplineChange()"> 🧗 Route</label>
+        <div class="field">
+            <label>Grade</label>
+            <select name="grade" id="grade-select">
+                {% for g in boulder_grades %}
+                <option value="{{ g }}">{{ g }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-        <br><br>
+        <div class="field">
+            <label>Attempts</label>
+            <input type="number" name="attempts" min="1" value="1" required>
+        </div>
 
-        <label>Grade:</label>
-        <select name="grade" id="grade-select">
-            {% for g in boulder_grades %}
-            <option value="{{ g }}">{{ g }}</option>
-            {% endfor %}
-        </select>
+        <div class="field">
+            <label>Result</label>
+            <select name="result">
+                {% for rt in result_types %}
+                <option value="{{ rt }}">{{ result_labels[rt] }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-        <br><br>
+        <div class="field">
+            <div class="field-inline">
+                <label><input type="checkbox" name="is_project"> ⭐ Mark as project</label>
+            </div>
+        </div>
 
-        <label>Attempts:</label>
-        <input type="number" name="attempts" min="1" value="1" required>
-
-        <br><br>
-
-        <label>Result:</label>
-        <select name="result">
-            {% for rt in result_types %}
-            <option value="{{ rt }}">{{ result_labels[rt] }}</option>
-            {% endfor %}
-        </select>
-
-        <br><br>
-
-        <label><input type="checkbox" name="is_project"> ⭐ Mark as project</label>
-
-        <br><br>
-
-        <label>Notes (optional):</label>
-        <textarea name="notes" rows="3" placeholder="Beta, how it felt, what to work on next time..."></textarea>
-
-        <br><br>
+        <div class="field">
+            <label>Notes (optional)</label>
+            <textarea name="notes" rows="3" placeholder="Beta, how it felt, what to work on next time..."></textarea>
+        </div>
 
         <button type="submit">Save Climb</button>
 
     </form>
 
-    <br>
-    <a href="/session/{{ session.id }}">← Back to Session</a>
+    <p style="margin-top: 16px;"><a href="/session/{{ session.id }}">← Back to Session</a></p>
 
     <script>
         const boulderGrades = {{ boulder_grades | tojson }};
@@ -82,7 +84,6 @@
         }
 
         function onDisciplineChange() {
-            // Repopulate grade dropdown
             const discipline = getDiscipline();
             const grades = discipline === 'boulder' ? boulderGrades : routeGrades;
             gradeSelect.innerHTML = '';
@@ -92,7 +93,6 @@
                 opt.textContent = g;
                 gradeSelect.appendChild(opt);
             });
-            // Clear any previous link — discipline changed
             clearLink();
             if (nameInput.value.trim()) fetchSuggestions(nameInput.value);
         }
@@ -142,7 +142,6 @@
         function selectRoute(r) {
             nameInput.value = r.name;
             routeIdInput.value = r.id;
-            // Auto-select the grade if it's in our list
             for (const opt of gradeSelect.options) {
                 if (opt.value === r.grade) {
                     opt.selected = true;
@@ -153,7 +152,6 @@
             suggestionsBox.style.display = 'none';
         }
 
-        // Debounced fetch on input
         let debounceTimer;
         nameInput.addEventListener('input', (e) => {
             clearLink();
@@ -161,7 +159,6 @@
             debounceTimer = setTimeout(() => fetchSuggestions(e.target.value), 200);
         });
 
-        // Hide suggestions on outside click
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.autocomplete-wrap')) {
                 suggestionsBox.style.display = 'none';

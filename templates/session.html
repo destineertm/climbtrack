@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>ClimbTrack – {{ session.location }}</title>
+    <title>ClimbTrack – {{ session.gym.name if session.gym else session.location }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -11,9 +11,7 @@
         {{ session.date.strftime('%B %d, %Y') }} ·
         {% if session.session_type == 'outdoor' %}⛰️ Outdoor{% else %}🏢 Indoor{% endif %}
     </p>
-    {% if session.notes %}
-        <p>{{ session.notes }}</p>
-    {% endif %}
+    {% if session.notes %}<p>{{ session.notes }}</p>{% endif %}
 
     {% if stats.total > 0 %}
     <div class="stats-card">
@@ -35,7 +33,6 @@
                 <div class="stat-label">Top Route</div>
             </div>
         </div>
-
         <div class="breakdown">
             <span>🔄 {{ stats.breakdown.attempt }}</span>
             <span>✅ {{ stats.breakdown.send }}</span>
@@ -45,7 +42,9 @@
     </div>
     {% endif %}
 
-    <a href="/session/{{ session.id }}/add" class="btn">+ Log a Climb</a>
+    <div class="btn-row">
+        <a href="/session/{{ session.id }}/add" class="btn">+ Log a Climb</a>
+    </div>
 
     <hr>
 
@@ -59,9 +58,12 @@
                 {{ climb.climb_name }}
                 {% endif %}
             </h3>
-            <p>{% if climb.discipline == 'route' %}🧗{% else %}🪨{% endif %} {{ climb.grade }}</p>
-            <p>Attempts: {{ climb.attempts }}</p>
-            <p>Result: {{ result_labels[climb.result] }}</p>
+            <p class="muted">{% if climb.discipline == 'route' %}🧗{% else %}🪨{% endif %} {{ climb.grade }}</p>
+            <div class="mini-stats">
+                <span>{{ climb.attempts }} attempt{% if climb.attempts != 1 %}s{% endif %}</span>
+                <span>·</span>
+                <span>{{ result_labels[climb.result] }}</span>
+            </div>
             {% if climb.notes %}
             <p class="climb-notes">📝 {{ climb.notes }}</p>
             {% endif %}
@@ -74,11 +76,13 @@
         </div>
         {% endfor %}
     {% else %}
-        <p class="muted">No climbs logged yet. Add your first one!</p>
+        <div class="empty-state">
+            <div class="empty-state-icon">🧗</div>
+            <p>No climbs logged yet. Add your first one!</p>
+        </div>
     {% endif %}
 
-    <br>
-    <a href="/">← Back to Dashboard</a>
+    <p style="margin-top: 16px;"><a href="/">← Back to Dashboard</a></p>
 
 </body>
 </html>
