@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ClimbTrack – Projects</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <h1>⭐ Projects</h1>
+
+    {% if project_data %}
+        {% set active = project_data | selectattr('is_sent', 'equalto', false) | list %}
+        {% set sent = project_data | selectattr('is_sent', 'equalto', true) | list %}
+
+        {% if active %}
+            <h2 class="section-heading">🔥 Active ({{ active | length }})</h2>
+            {% for p in active %}
+            <div class="card project-card">
+                <h3><a href="/route/{{ p.route.id }}">{{ p.route.name }}</a></h3>
+                <p class="muted">
+                    {% if p.route.discipline == 'route' %}🧗{% else %}🪨{% endif %} {{ p.route.grade }}
+                    · {{ p.route.gym.name if p.route.gym else p.route.location }}
+                </p>
+                <div class="mini-stats">
+                    <span>{{ p.total_attempts }} attempt{% if p.total_attempts != 1 %}s{% endif %}</span>
+                    <span>·</span>
+                    <span>{{ p.session_count }} session{% if p.session_count != 1 %}s{% endif %}</span>
+                    {% if p.best_result and p.best_result != 'attempt' %}
+                    <span>·</span>
+                    <span>Best: {{ result_labels[p.best_result] }}</span>
+                    {% endif %}
+                </div>
+                {% if p.first_date %}
+                <p class="muted">
+                    Started {{ p.first_date.strftime('%b %d, %Y') }}
+                    {% if p.last_date and p.last_date != p.first_date %}
+                    · Last worked {{ p.last_date.strftime('%b %d, %Y') }}
+                    {% endif %}
+                </p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% endif %}
+
+        {% if sent %}
+            <h2 class="section-heading">🏆 Sent ({{ sent | length }})</h2>
+            {% for p in sent %}
+            <div class="card project-card sent">
+                <h3><a href="/route/{{ p.route.id }}">{{ p.route.name }}</a></h3>
+                <p class="muted">
+                    {% if p.route.discipline == 'route' %}🧗{% else %}🪨{% endif %} {{ p.route.grade }}
+                    · {{ p.route.gym.name if p.route.gym else p.route.location }}
+                </p>
+                <div class="mini-stats">
+                    <span>{{ result_labels[p.best_result] }}</span>
+                    <span>·</span>
+                    <span>{{ p.total_attempts }} total attempt{% if p.total_attempts != 1 %}s{% endif %}</span>
+                    <span>·</span>
+                    <span>{{ p.session_count }} session{% if p.session_count != 1 %}s{% endif %}</span>
+                </div>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% else %}
+        <p class="muted">No projects yet. Mark a climb as a project to start tracking it!</p>
+    {% endif %}
+
+    <br>
+    <a href="/">← Back to Dashboard</a>
+
+</body>
+</html>

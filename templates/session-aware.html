@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ClimbTrack – Log a Climb</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <h1>Log a Climb</h1>
+    <p class="muted">Session: {{ session.location }}</p>
+
+    <form method="POST">
+
+        <label>Climb Name:</label>
+        <input type="text" name="climb_name" required>
+
+        <br><br>
+
+        <label>Grade:</label>
+        <input type="text" name="grade" required>
+
+        <br><br>
+
+        <label>Attempts:</label>
+        <input type="number" name="attempts" min="1" value="1" required>
+
+        <br><br>
+
+        <label>Sent?</label>
+        <input type="checkbox" name="sent">
+
+        <br><br>
+
+        <button type="submit">Save Climb</button>
+
+    </form>
+
+    <br>
+    <a href="/session/{{ session.id }}">← Back to Session</a>
+
+</body>
+</html>

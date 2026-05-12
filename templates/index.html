@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ClimbTrack</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <h1>ClimbTrack</h1>
+
+    {% if all_time.total > 0 %}
+    <div class="stats-card">
+        <h3>All Time</h3>
+        <div class="stats-grid">
+            <div class="stat">
+                <div class="stat-value">{{ all_time.total_sessions }}</div>
+                <div class="stat-label">Sessions</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">{{ all_time.total }}</div>
+                <div class="stat-label">Climbs</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">{{ all_time.sends }}</div>
+                <div class="stat-label">Sends</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">{{ all_time.hardest_boulder or '—' }}</div>
+                <div class="stat-label">Top Boulder</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">{{ all_time.hardest_route or '—' }}</div>
+                <div class="stat-label">Top Route</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <a href="/session/new" class="btn">+ Start New Session</a>
+    <a href="/projects" class="btn btn-secondary">⭐ Projects</a>
+    <a href="/gyms" class="btn btn-secondary">🏢 Gyms</a>
+
+    <hr>
+
+    {% if sessions %}
+        {% for session in sessions %}
+        {% set stats = session_stats[session.id] %}
+        <div class="card">
+            <h3><a href="/session/{{ session.id }}">{{ session.gym.name if session.gym else session.location }}</a></h3>
+            <p class="muted">
+                {{ session.date.strftime('%B %d, %Y') }} ·
+                {% if session.session_type == 'outdoor' %}⛰️ Outdoor{% else %}🏢 Indoor{% endif %}
+            </p>
+
+            <div class="mini-stats">
+                <span>{{ stats.total }} climb{% if stats.total != 1 %}s{% endif %}</span>
+                <span>·</span>
+                <span>{{ stats.send_rate }}% send rate</span>
+                {% if stats.hardest_boulder %}
+                <span>·</span>
+                <span>🪨 {{ stats.hardest_boulder }}</span>
+                {% endif %}
+                {% if stats.hardest_route %}
+                <span>·</span>
+                <span>🧗 {{ stats.hardest_route }}</span>
+                {% endif %}
+            </div>
+
+            {% if session.notes %}
+                <p class="muted">{{ session.notes }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% else %}
+        <p class="muted">No sessions yet. Start one above!</p>
+    {% endif %}
+
+</body>
+</html>

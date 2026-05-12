@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ClimbTrack – Edit Climb</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <h1>Edit Climb</h1>
+
+    <form method="POST">
+
+        <label>Climb Name:</label>
+        <input type="text" name="climb_name" value="{{ climb.climb_name }}" required>
+
+        <br><br>
+
+        <label>Discipline:</label>
+        <br>
+        <label><input type="radio" name="discipline" value="boulder" {% if climb.discipline == 'boulder' %}checked{% endif %} onchange="updateGradeList()"> 🪨 Boulder</label>
+        <label><input type="radio" name="discipline" value="route" {% if climb.discipline == 'route' %}checked{% endif %} onchange="updateGradeList()"> 🧗 Route</label>
+
+        <br><br>
+
+        <label>Grade:</label>
+        <select name="grade" id="grade-select" data-current="{{ climb.grade }}">
+            {# Populated by JS so it stays in sync with discipline #}
+        </select>
+
+        <br><br>
+
+        <label>Attempts:</label>
+        <input type="number" name="attempts" min="1" value="{{ climb.attempts }}" required>
+
+        <br><br>
+
+        <label>Result:</label>
+        <select name="result">
+            {% for rt in result_types %}
+            <option value="{{ rt }}" {% if rt == climb.result %}selected{% endif %}>{{ result_labels[rt] }}</option>
+            {% endfor %}
+        </select>
+
+        <br><br>
+
+        <label>Notes (optional):</label>
+        <textarea name="notes" rows="3" placeholder="Beta, how it felt, what to work on next time...">{{ climb.notes or '' }}</textarea>
+
+        <br><br>
+
+        <button type="submit">Save Changes</button>
+
+    </form>
+
+    <br>
+    <a href="/session/{{ climb.session_id }}">← Cancel</a>
+
+    <script>
+        const boulderGrades = {{ boulder_grades | tojson }};
+        const routeGrades = {{ route_grades | tojson }};
+        const currentGrade = "{{ climb.grade }}";
+
+        function updateGradeList() {
+            const discipline = document.querySelector('input[name="discipline"]:checked').value;
+            const grades = discipline === 'boulder' ? boulderGrades : routeGrades;
+            const select = document.getElementById('grade-select');
+            select.innerHTML = '';
+            grades.forEach(g => {
+                const opt = document.createElement('option');
+                opt.value = g;
+                opt.textContent = g;
+                if (g === currentGrade) opt.selected = true;
+                select.appendChild(opt);
+            });
+        }
+
+        // Initial population
+        updateGradeList();
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ClimbTrack – Log a Climb</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <h1>Log a Climb</h1>
+    <p class="muted">Session: {{ session.gym.name if session.gym else session.location }} ({{ session.session_type }})</p>
+
+    <form method="POST">
+
+        <label>Climb Name:</label>
+        <div class="autocomplete-wrap">
+            <input type="text" name="climb_name" id="climb-name-input" autocomplete="off" required>
+            <input type="hidden" name="route_id" id="route-id-input">
+            <div id="suggestions" class="suggestions"></div>
+            <p id="link-status" class="muted link-status"></p>
+        </div>
+
+        <br>
+
+        <label>Discipline:</label>
+        <br>
+        <label><input type="radio" name="discipline" value="boulder" checked onchange="onDisciplineChange()"> 🪨 Boulder</label>
+        <label><input type="radio" name="discipline" value="route" onchange="onDisciplineChange()"> 🧗 Route</label>
+
+        <br><br>
+
+        <label>Grade:</label>
+        <select name="grade" id="grade-select">
+            {% for g in boulder_grades %}
+            <option value="{{ g }}">{{ g }}</option>
+            {% endfor %}
+        </select>
+
+        <br><br>
+
+        <label>Attempts:</label>
+        <input type="number" name="attempts" min="1" value="1" required>
+
+        <br><br>
+
+        <label>Result:</label>
+        <select name="result">
+            {% for rt in result_types %}
+            <option value="{{ rt }}">{{ result_labels[rt] }}</option>
+            {% endfor %}
+        </select>
+
+        <br><br>
+
+        <label><input type="checkbox" name="is_project"> ⭐ Mark as project</label>
+
+        <br><br>
+
+        <label>Notes (optional):</label>
+        <textarea name="notes" rows="3" placeholder="Beta, how it felt, what to work on next time..."></textarea>
+
+        <br><br>
+
+        <button type="submit">Save Climb</button>
+
+    </form>
+
+    <br>
+    <a href="/session/{{ session.id }}">← Back to Session</a>
+
+    <script>
+        const boulderGrades = {{ boulder_grades | tojson }};
+        const routeGrades = {{ route_grades | tojson }};
+
+        const nameInput = document.getElementById('climb-name-input');
+        const routeIdInput = document.getElementById('route-id-input');
+        const suggestionsBox = document.getElementById('suggestions');
+        const linkStatus = document.getElementById('link-status');
+        const gradeSelect = document.getElementById('grade-select');
+
+        function getDiscipline() {
+            return document.querySelector('input[name="discipline"]:checked').value;
+        }
+
+        function onDisciplineChange() {
+            // Repopulate grade dropdown
+            const discipline = getDiscipline();
+            const grades = discipline === 'boulder' ? boulderGrades : routeGrades;
+            gradeSelect.innerHTML = '';
+            grades.forEach(g => {
+                const opt = document.createElement('option');
+                opt.value = g;
+                opt.textContent = g;
+                gradeSelect.appendChild(opt);
+            });
+            // Clear any previous link — discipline changed
+            clearLink();
+            if (nameInput.value.trim()) fetchSuggestions(nameInput.value);
+        }
+
+        function clearLink() {
+            routeIdInput.value = '';
+            linkStatus.textContent = '';
+        }
+
+        async function fetchSuggestions(query) {
+            if (!query.trim()) {
+                suggestionsBox.innerHTML = '';
+                suggestionsBox.style.display = 'none';
+                return;
+            }
+            const params = new URLSearchParams({
+                q: query,
+                discipline: getDiscipline(),
+            });
+            try {
+                const res = await fetch('/api/routes/search?' + params.toString());
+                const matches = await res.json();
+                renderSuggestions(matches);
+            } catch (err) {
+                console.error('Suggestion fetch failed:', err);
+            }
+        }
+
+        function renderSuggestions(matches) {
+            suggestionsBox.innerHTML = '';
+            if (matches.length === 0) {
+                suggestionsBox.style.display = 'none';
+                return;
+            }
+            matches.forEach(r => {
+                const div = document.createElement('div');
+                div.className = 'suggestion';
+                const star = r.is_project ? '⭐ ' : '';
+                const loc = r.location ? ` · ${r.location}` : '';
+                div.textContent = `${star}${r.name} — ${r.grade}${loc}`;
+                div.onclick = () => selectRoute(r);
+                suggestionsBox.appendChild(div);
+            });
+            suggestionsBox.style.display = 'block';
+        }
+
+        function selectRoute(r) {
+            nameInput.value = r.name;
+            routeIdInput.value = r.id;
+            // Auto-select the grade if it's in our list
+            for (const opt of gradeSelect.options) {
+                if (opt.value === r.grade) {
+                    opt.selected = true;
+                    break;
+                }
+            }
+            linkStatus.textContent = `🔗 Linked to existing route (will track progress)`;
+            suggestionsBox.style.display = 'none';
+        }
+
+        // Debounced fetch on input
+        let debounceTimer;
+        nameInput.addEventListener('input', (e) => {
+            clearLink();
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => fetchSuggestions(e.target.value), 200);
+        });
+
+        // Hide suggestions on outside click
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.autocomplete-wrap')) {
+                suggestionsBox.style.display = 'none';
+            }
+        });
+    </script>
+
+</body>
+</html>

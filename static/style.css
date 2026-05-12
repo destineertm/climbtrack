@@ -1,0 +1,542 @@
+/* ====================
+   ClimbTrack — Stylesheet
+   Dark, focused, mobile-friendly
+   ==================== */
+
+:root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface-2: #0b1220;
+    --border: #334155;
+    --border-strong: #475569;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+    --accent: #38bdf8;
+    --accent-strong: #0ea5e9;
+    --success: #22c55e;
+    --danger: #f87171;
+    --warning: #fbbf24;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --gap: 16px;
+    --gap-sm: 8px;
+    --gap-lg: 24px;
+}
+
+/* ---- Reset / base ---- */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 24px 16px;
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.5;
+}
+
+h1 {
+    color: var(--accent);
+    margin: 0 0 12px 0;
+    font-size: 1.8rem;
+}
+
+h2 {
+    color: var(--text);
+    margin: 24px 0 12px 0;
+    font-size: 1.2rem;
+}
+
+h3 {
+    margin: 0 0 8px 0;
+    font-size: 1.05rem;
+    color: var(--text);
+}
+
+p {
+    margin: 6px 0;
+}
+
+a {
+    color: var(--success);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 24px 0;
+}
+
+.muted {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.section-heading {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 24px 0 12px 0;
+    font-weight: 600;
+}
+
+/* ---- Buttons ---- */
+
+.btn-row {
+    display: flex;
+    gap: var(--gap-sm);
+    flex-wrap: wrap;
+    margin: 16px 0;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: var(--accent);
+    color: var(--bg);
+    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: background-color 0.15s ease;
+}
+
+.btn:hover {
+    background-color: var(--accent-strong);
+    text-decoration: none;
+}
+
+.btn-secondary {
+    background-color: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+    background-color: var(--border);
+}
+
+/* Link-style buttons used inside cards */
+.link-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--success);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.link-btn:hover {
+    text-decoration: underline;
+    background: none;
+}
+
+.link-btn-danger {
+    color: var(--danger);
+}
+
+/* ---- Forms ---- */
+
+form {
+    background: var(--surface);
+    padding: 20px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+}
+
+.field {
+    margin-bottom: 16px;
+}
+
+.field:last-child {
+    margin-bottom: 0;
+}
+
+.field label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: var(--text);
+}
+
+.field-help {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+/* Inline labels (radios, checkboxes) */
+.field-inline {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+}
+
+.field-inline label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+select,
+textarea {
+    padding: 10px 12px;
+    width: 100%;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    font-size: 0.95rem;
+    font-family: inherit;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 70px;
+}
+
+input[type="radio"],
+input[type="checkbox"] {
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+button[type="submit"] {
+    width: 100%;
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background-color: var(--accent);
+    color: var(--bg);
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-top: 8px;
+}
+
+button[type="submit"]:hover {
+    background-color: var(--accent-strong);
+}
+
+/* ---- Cards ---- */
+
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 12px;
+}
+
+.card h3 {
+    margin: 0 0 4px 0;
+}
+
+.card h3 a {
+    color: var(--text);
+}
+
+.card h3 a:hover {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.card .muted {
+    margin-bottom: 8px;
+}
+
+.card-actions {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 16px;
+}
+
+/* ---- Stats cards ---- */
+
+.stats-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-bottom: 20px;
+}
+
+.stats-card h3 {
+    margin: 0 0 14px 0;
+    color: var(--accent);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 12px;
+}
+
+.stat {
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+}
+
+.stat-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 4px;
+}
+
+.breakdown {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    font-size: 0.9rem;
+    color: var(--text);
+}
+
+.mini-stats {
+    display: flex;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 6px 0;
+    flex-wrap: wrap;
+}
+
+/* ---- Project cards ---- */
+
+.project-card.sent {
+    opacity: 0.7;
+    border-left: 3px solid var(--success);
+}
+
+/* ---- Timeline (route detail) ---- */
+
+.timeline-entry {
+    border-left: 3px solid var(--accent);
+}
+
+.timeline-date {
+    margin: 0 0 6px 0 !important;
+    font-size: 0.8rem;
+}
+
+.timeline-result {
+    font-size: 1.05rem;
+    font-weight: 500;
+    margin: 4px 0 8px 0;
+}
+
+.climb-notes {
+    background: var(--surface-2);
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    font-style: italic;
+    color: var(--text);
+    margin-top: 8px;
+    font-size: 0.9rem;
+}
+
+/* ---- Empty states ---- */
+
+.empty-state {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 32px 16px;
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    margin: 16px 0;
+}
+
+.empty-state-icon {
+    font-size: 2rem;
+    margin-bottom: 8px;
+}
+
+/* ---- Autocomplete suggestions (climb name) ---- */
+
+.autocomplete-wrap {
+    position: relative;
+}
+
+.suggestions {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    max-height: 240px;
+    overflow-y: auto;
+    z-index: 10;
+}
+
+.suggestion {
+    padding: 10px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--surface);
+    font-size: 0.9rem;
+}
+
+.suggestion:last-child {
+    border-bottom: none;
+}
+
+.suggestion:hover {
+    background: var(--surface);
+}
+
+.link-status {
+    margin-top: 6px;
+    color: var(--success);
+    font-size: 0.85rem;
+}
+
+/* ---- Combobox (gym picker) ---- */
+
+.combobox {
+    position: relative;
+    width: 100%;
+}
+
+.combobox input[type="text"] {
+    padding-right: 36px;
+}
+
+.combobox-toggle {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px 8px;
+    width: auto;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.combobox-toggle:hover {
+    color: var(--text);
+}
+
+.combobox-list {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    max-height: 240px;
+    overflow-y: auto;
+    z-index: 10;
+}
+
+.combobox-list.open {
+    display: block;
+}
+
+.combobox-item {
+    padding: 10px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--surface);
+    font-size: 0.95rem;
+}
+
+.combobox-item:last-child {
+    border-bottom: none;
+}
+
+.combobox-item:hover {
+    background: var(--surface);
+}
+
+.combobox-create {
+    color: var(--success);
+    font-weight: 500;
+}
+
+.combobox-empty {
+    padding: 10px 12px;
+    color: var(--text-dim);
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+/* ---- Mobile tweaks ---- */
+
+@media (max-width: 480px) {
+    body {
+        padding: 16px 12px;
+    }
+
+    h1 {
+        font-size: 1.5rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .btn-row {
+        flex-direction: column;
+    }
+
+    .btn {
+        justify-content: center;
+    }
+}

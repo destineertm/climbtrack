@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ClimbTrack – {{ gym.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <h1>{{ gym.name }}</h1>
+    {% if gym.is_outdoor %}
+    <p class="muted">⛰️ Outdoor</p>
+    {% endif %}
+
+    {% if stats.total > 0 %}
+    <div class="stats-card">
+        <div class="stats-grid">
+            <div class="stat">
+                <div class="stat-value">{{ sessions | length }}</div>
+                <div class="stat-label">Sessions</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">{{ stats.total }}</div>
+                <div class="stat-label">Climbs</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">{{ stats.send_rate }}%</div>
+                <div class="stat-label">Send Rate</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">{{ stats.hardest_boulder or '—' }}</div>
+                <div class="stat-label">Top Boulder</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">{{ stats.hardest_route or '—' }}</div>
+                <div class="stat-label">Top Route</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <h2 class="section-heading">Sessions ({{ sessions | length }})</h2>
+    {% if sessions %}
+        {% for s in sessions %}
+        <div class="card">
+            <h3><a href="/session/{{ s.id }}">{{ s.date.strftime('%B %d, %Y') }}</a></h3>
+            <p class="muted">
+                {% if s.session_type == 'outdoor' %}⛰️ Outdoor{% else %}🏢 Indoor{% endif %}
+                · {{ s.climbs | length }} climb(s)
+            </p>
+            {% if s.notes %}
+            <p class="muted">{{ s.notes }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% else %}
+        <p class="muted">No sessions at this gym yet.</p>
+    {% endif %}
+
+    {% if routes %}
+    <h2 class="section-heading">Routes ({{ routes | length }})</h2>
+        {% for r in routes %}
+        <div class="card">
+            <h3><a href="/route/{{ r.id }}">{% if r.is_project %}⭐ {% endif %}{{ r.name }}</a></h3>
+            <p class="muted">
+                {% if r.discipline == 'route' %}🧗{% else %}🪨{% endif %} {{ r.grade }}
+                · {{ r.climbs | length }} attempt(s)
+            </p>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    <br>
+    <a href="/gyms">← All Gyms</a>
+    &nbsp;·&nbsp;
+    <a href="/">Dashboard</a>
+
+</body>
+</html>

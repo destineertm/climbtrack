@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ClimbTrack – New Session</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <h1>Start a Session</h1>
+
+    <form method="POST">
+
+        <label>Gym / Location:</label>
+        <div class="combobox" id="gym-combobox">
+            <input type="text" id="gym-input" name="gym_name" autocomplete="off"
+                   placeholder="Click to pick a gym, or type a new one" required>
+            <button type="button" class="combobox-toggle" id="gym-toggle" aria-label="Open dropdown">▾</button>
+            <div class="combobox-list" id="gym-list"></div>
+        </div>
+
+        <br><br>
+
+        <label>Session Type:</label>
+        <br>
+        <label><input type="radio" name="session_type" value="indoor" checked> 🏢 Indoor</label>
+        <label><input type="radio" name="session_type" value="outdoor"> ⛰️ Outdoor</label>
+
+        <br><br>
+
+        <label>Notes (optional):</label>
+        <input type="text" name="notes" placeholder="e.g. Feeling strong today">
+
+        <br><br>
+
+        <button type="submit">Start Session</button>
+
+    </form>
+
+    <br>
+    <a href="/">← Back to Dashboard</a>
+
+    <script>
+        const gymNames = {{ existing_gyms | map(attribute='name') | list | tojson }};
+
+        const combobox = document.getElementById('gym-combobox');
+        const input = document.getElementById('gym-input');
+        const toggle = document.getElementById('gym-toggle');
+        const list = document.getElementById('gym-list');
+
+        function openList() {
+            renderList(input.value);
+            list.classList.add('open');
+        }
+        function closeList() {
+            list.classList.remove('open');
+        }
+
+        function renderList(filter) {
+            const q = (filter || '').trim().toLowerCase();
+            const matches = gymNames.filter(n => n.toLowerCase().includes(q));
+            list.innerHTML = '';
+
+            matches.forEach(name => {
+                const item = document.createElement('div');
+                item.className = 'combobox-item';
+                item.textContent = name;
+                item.onmousedown = (e) => {
+                    e.preventDefault();
+                    input.value = name;
+                    closeList();
+                };
+                list.appendChild(item);
+            });
+
+            // "+ Create new" option, only if the typed value doesn't match exactly
+            const exact = gymNames.some(n => n.toLowerCase() === q);
+            if (q && !exact) {
+                const create = document.createElement('div');
+                create.className = 'combobox-item combobox-create';
+                create.textContent = `+ Add new gym: "${filter.trim()}"`;
+                create.onmousedown = (e) => {
+                    e.preventDefault();
+                    input.value = filter.trim();
+                    closeList();
+                };
+                list.appendChild(create);
+            }
+
+            if (matches.length === 0 && !q) {
+                const empty = document.createElement('div');
+                empty.className = 'combobox-empty';
+                empty.textContent = 'No gyms yet — type a name to add one';
+                list.appendChild(empty);
+            }
+        }
+
+        input.addEventListener('focus', openList);
+        input.addEventListener('input', () => renderList(input.value));
+        toggle.addEventListener('click', () => {
+            if (list.classList.contains('open')) {
+                closeList();
+            } else {
+                input.focus();
+                openList();
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!combobox.contains(e.target)) closeList();
+        });
+    </script>
+
+</body>
+</html>

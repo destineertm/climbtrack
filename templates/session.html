@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ClimbTrack – {{ session.location }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <h1>{{ session.gym.name if session.gym else session.location }}</h1>
+    <p class="muted">
+        {{ session.date.strftime('%B %d, %Y') }} ·
+        {% if session.session_type == 'outdoor' %}⛰️ Outdoor{% else %}🏢 Indoor{% endif %}
+    </p>
+    {% if session.notes %}
+        <p>{{ session.notes }}</p>
+    {% endif %}
+
+    {% if stats.total > 0 %}
+    <div class="stats-card">
+        <div class="stats-grid">
+            <div class="stat">
+                <div class="stat-value">{{ stats.total }}</div>
+                <div class="stat-label">Climbs</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">{{ stats.send_rate }}%</div>
+                <div class="stat-label">Send Rate</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">{{ stats.hardest_boulder or '—' }}</div>
+                <div class="stat-label">Top Boulder</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">{{ stats.hardest_route or '—' }}</div>
+                <div class="stat-label">Top Route</div>
+            </div>
+        </div>
+
+        <div class="breakdown">
+            <span>🔄 {{ stats.breakdown.attempt }}</span>
+            <span>✅ {{ stats.breakdown.send }}</span>
+            <span>⚡ {{ stats.breakdown.flash }}</span>
+            <span>👁️ {{ stats.breakdown.onsight }}</span>
+        </div>
+    </div>
+    {% endif %}
+
+    <a href="/session/{{ session.id }}/add" class="btn">+ Log a Climb</a>
+
+    <hr>
+
+    {% if session.climbs %}
+        {% for climb in session.climbs %}
+        <div class="card">
+            <h3>
+                {% if climb.route_id %}
+                <a href="/route/{{ climb.route_id }}">{{ climb.climb_name }}</a>
+                {% else %}
+                {{ climb.climb_name }}
+                {% endif %}
+            </h3>
+            <p>{% if climb.discipline == 'route' %}🧗{% else %}🪨{% endif %} {{ climb.grade }}</p>
+            <p>Attempts: {{ climb.attempts }}</p>
+            <p>Result: {{ result_labels[climb.result] }}</p>
+            {% if climb.notes %}
+            <p class="climb-notes">📝 {{ climb.notes }}</p>
+            {% endif %}
+            <div class="card-actions">
+                <a href="/climb/{{ climb.id }}/edit" class="link-btn">Edit</a>
+                <form method="POST" action="/climb/{{ climb.id }}/delete" style="display:inline" onsubmit="return confirm('Delete this climb?');">
+                    <button type="submit" class="link-btn link-btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p class="muted">No climbs logged yet. Add your first one!</p>
+    {% endif %}
+
+    <br>
+    <a href="/">← Back to Dashboard</a>
+
+</body>
+</html>

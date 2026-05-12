@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ClimbTrack – {{ route.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <h1>
+        {% if route.is_project %}⭐ {% endif %}{{ route.name }}
+    </h1>
+    <p class="muted">
+        {% if route.discipline == 'route' %}🧗{% else %}🪨{% endif %} {{ route.grade }}
+        · {{ route.gym.name if route.gym else route.location }}
+    </p>
+
+    {% if climbs %}
+    <div class="stats-card">
+        <div class="stats-grid">
+            <div class="stat">
+                <div class="stat-value">{{ session_count }}</div>
+                <div class="stat-label">Sessions</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">{{ total_attempts }}</div>
+                <div class="stat-label">Attempts</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">
+                    {% if best_result and best_result != 'attempt' %}
+                        {{ result_labels[best_result].split(' ')[0] }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </div>
+                <div class="stat-label">Best</div>
+            </div>
+            {% if days_worked is not none %}
+            <div class="stat">
+                <div class="stat-value">{{ days_worked }}</div>
+                <div class="stat-label">Day{% if days_worked != 1 %}s{% endif %} Worked</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <form method="POST" action="/route/{{ route.id }}/toggle_project" style="display:inline">
+        <button type="submit" class="btn btn-secondary">
+            {% if route.is_project %}Remove from projects{% else %}⭐ Mark as project{% endif %}
+        </button>
+    </form>
+
+    <hr>
+
+    <h2 class="section-heading">Timeline</h2>
+
+    {% if climbs %}
+        {% for climb in climbs %}
+        <div class="card timeline-entry">
+            <p class="muted timeline-date">
+                {{ climb.session.date.strftime('%b %d, %Y') }} · {{ climb.session.gym.name if climb.session.gym else climb.session.location }}
+            </p>
+            <p class="timeline-result">{{ result_labels[climb.result] }}</p>
+            <p>{{ climb.attempts }} attempt{% if climb.attempts != 1 %}s{% endif %} this session</p>
+            {% if climb.notes %}
+            <p class="climb-notes">📝 {{ climb.notes }}</p>
+            {% endif %}
+            <div class="card-actions">
+                <a href="/climb/{{ climb.id }}/edit" class="link-btn">Edit</a>
+                <a href="/session/{{ climb.session_id }}" class="link-btn">View Session</a>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p class="muted">No attempts logged yet.</p>
+    {% endif %}
+
+    <br>
+    <a href="/projects">← Back to Projects</a>
+    &nbsp;·&nbsp;
+    <a href="/">Dashboard</a>
+
+</body>
+</html>

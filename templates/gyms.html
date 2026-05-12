@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ClimbTrack – Gyms</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <h1>🏢 Gyms & Crags</h1>
+
+    {% if gym_data %}
+        {% for d in gym_data %}
+        <div class="card">
+            <h3><a href="/gym/{{ d.gym.id }}">{{ d.gym.name }}</a></h3>
+            {% if d.gym.is_outdoor %}
+            <p class="muted">⛰️ Outdoor</p>
+            {% endif %}
+            <div class="mini-stats">
+                <span>{{ d.session_count }} session{% if d.session_count != 1 %}s{% endif %}</span>
+                <span>·</span>
+                <span>{{ d.climb_count }} climb{% if d.climb_count != 1 %}s{% endif %}</span>
+                <span>·</span>
+                <span>{{ d.send_count }} send{% if d.send_count != 1 %}s{% endif %}</span>
+            </div>
+            {% if d.last_visit %}
+            <p class="muted">Last visit: {{ d.last_visit.strftime('%b %d, %Y') }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% else %}
+        <p class="muted">No gyms yet. Start a session to add one!</p>
+    {% endif %}
+
+    <br>
+    <a href="/">← Back to Dashboard</a>
+
+</body>
+</html>
