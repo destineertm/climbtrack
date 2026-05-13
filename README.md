@@ -10,7 +10,7 @@ A personal climbing tracker built with Flask. Log sessions, track projects, anal
 
 Because spreadsheets are for accountants, not climbers. And because "I think I've tried this one before" is not a training strategy.
 
-![Climber meme](https://i.imgur.com/placeholder.png)
+![Climber meme](https://www.active-traveller.com/images/mpora-archive/best-rock-climbing-memes-1.jpg)
 
 > *You, logging your 47th attempt on the same V6: "I'm basically a different person than when I started this project."*
 
