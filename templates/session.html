@@ -67,6 +67,13 @@
             {% if climb.notes %}
             <p class="climb-notes">📝 {{ climb.notes }}</p>
             {% endif %}
+            {% if climb.get_style_tags() %}
+            <div class="tag-list">
+                {% for tag in climb.get_style_tags() %}
+                <span class="tag">{{ tag }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
             <div class="card-actions">
                 <button class="card-action-btn" onclick="window.location='/climb/{{ climb.id }}/edit'">Edit</button>
                 <button class="card-action-btn card-action-btn-danger" onclick="if(confirm('Delete this climb?')) { fetch('/climb/{{ climb.id }}/delete', {method:'POST'}).then(() => window.location.reload()) }">Delete</button>

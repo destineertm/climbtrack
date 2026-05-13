@@ -85,6 +85,12 @@ RESULT_LABELS = {
     'onsight':  '👁️ Onsight',
 }
 
+STYLE_TAGS = [
+    'crimp', 'slab', 'overhang', 'pinch', 'dyno',
+    'compression', 'crack', 'mantle', 'jump',
+    'coordination', 'power', 'endurance',
+]
+
 # Anything that isn't an "attempt" counts as a successful send
 SEND_RESULTS = {'send', 'flash', 'onsight'}
 
@@ -165,6 +171,13 @@ class Climb(db.Model):
     attempts = db.Column(db.Integer)
     result = db.Column(db.String(20), default='attempt')
     notes = db.Column(db.String(500))
+    style_tags = db.Column(db.String(300))  # comma-separated e.g. "crimp,overhang"
+
+    def get_style_tags(self):
+        """Return style_tags as a list."""
+        if not self.style_tags:
+            return []
+        return [t.strip() for t in self.style_tags.split(',') if t.strip()]
 
 
 def find_or_create_gym(name, is_outdoor=False):
@@ -476,6 +489,8 @@ def add_climb(session_id):
             result = "attempt"
         is_project = bool(request.form.get("is_project"))
         notes = request.form.get("notes", "").strip() or None
+        selected_tags = request.form.getlist("style_tags")
+        style_tags = ','.join(t for t in selected_tags if t in STYLE_TAGS) or None
 
         # Link to an existing route (if user clicked a suggestion) or find-or-create
         route_id_raw = request.form.get("route_id")
@@ -501,6 +516,7 @@ def add_climb(session_id):
             attempts=attempts,
             result=result,
             notes=notes,
+            style_tags=style_tags,
         )
         db.session.add(new_climb)
         db.session.commit()
@@ -513,6 +529,7 @@ def add_climb(session_id):
         result_labels=RESULT_LABELS,
         boulder_grades=get_grade_list('boulder', session.session_type),
         route_grades=get_grade_list('route', session.session_type),
+        style_tags=STYLE_TAGS,
     )
 
 
@@ -533,6 +550,8 @@ def edit_climb(climb_id):
             result = "attempt"
         climb.result = result
         climb.notes = request.form.get("notes", "").strip() or None
+        selected_tags = request.form.getlist("style_tags")
+        climb.style_tags = ','.join(t for t in selected_tags if t in STYLE_TAGS) or None
 
         db.session.commit()
         return redirect(f"/session/{climb.session_id}")
@@ -544,6 +563,7 @@ def edit_climb(climb_id):
         result_labels=RESULT_LABELS,
         boulder_grades=get_grade_list('boulder', climb.session.session_type),
         route_grades=get_grade_list('route', climb.session.session_type),
+        style_tags=STYLE_TAGS,
     )
 
 
@@ -556,5 +576,105 @@ def delete_climb(climb_id):
     return redirect(f"/session/{session_id}")
 
 
+@app.route("/insights")
+def insights():
+    all_climbs = Climb.query.join(Session).order_by(Session.date).all()
+    all_sessions = Session.query.order_by(Session.date).all()
+
+    # --- Grade progression ---
+    # For each session, find the hardest grade sent (boulder + route separately)
+    boulder_progression = []
+    route_progression = []
+    for s in all_sessions:
+        session_climbs = [c for c in s.climbs if c.result in SEND_RESULTS]
+        b = max(
+            (c.grade for c in session_climbs if c.discipline == 'boulder' and c.grade),
+            key=lambda g: GRADE_RANK.get(('boulder', g), -1),
+            default=None
+        )
+        r = max(
+            (c.grade for c in session_climbs if c.discipline == 'route' and c.grade),
+            key=lambda g: GRADE_RANK.get(('route', g), -1),
+            default=None
+        )
+        if b:
+            boulder_progression.append({
+                'date': s.date.strftime('%b %d'),
+                'grade': b,
+                'rank': GRADE_RANK.get(('boulder', b), 0),
+            })
+        if r:
+            route_progression.append({
+                'date': s.date.strftime('%b %d'),
+                'grade': r,
+                'rank': GRADE_RANK.get(('route', r), 0),
+            })
+
+    # --- Style breakdown ---
+    # Count sends vs attempts per tag
+    tag_stats = {tag: {'sends': 0, 'attempts': 0} for tag in STYLE_TAGS}
+    for c in all_climbs:
+        for tag in c.get_style_tags():
+            if tag in tag_stats:
+                if c.result in SEND_RESULTS:
+                    tag_stats[tag]['sends'] += 1
+                else:
+                    tag_stats[tag]['attempts'] += 1
+
+    # Only include tags that have been used
+    tag_stats = {k: v for k, v in tag_stats.items() if v['sends'] + v['attempts'] > 0}
+
+    # --- Send rate by grade (boulder) ---
+    grade_send_rate = {}
+    for c in all_climbs:
+        if not c.grade or not c.discipline:
+            continue
+        key = (c.discipline, c.grade)
+        if key not in grade_send_rate:
+            grade_send_rate[key] = {'sends': 0, 'total': 0}
+        grade_send_rate[key]['total'] += 1
+        if c.result in SEND_RESULTS:
+            grade_send_rate[key]['sends'] += 1
+
+    boulder_send_rates = sorted(
+        [{'grade': g, 'rate': round(v['sends'] / v['total'] * 100), 'total': v['total']}
+         for (d, g), v in grade_send_rate.items() if d == 'boulder'],
+        key=lambda x: GRADE_RANK.get(('boulder', x['grade']), -1)
+    )
+    route_send_rates = sorted(
+        [{'grade': g, 'rate': round(v['sends'] / v['total'] * 100), 'total': v['total']}
+         for (d, g), v in grade_send_rate.items() if d == 'route'],
+        key=lambda x: GRADE_RANK.get(('route', x['grade']), -1)
+    )
+
+    # --- Most worked routes ---
+    top_projects = sorted(
+        [r for r in Route.query.all() if len(r.climbs) > 1],
+        key=lambda r: sum(c.attempts for c in r.climbs),
+        reverse=True
+    )[:5]
+
+    # --- Quick summary numbers ---
+    total_climbs = len(all_climbs)
+    total_sends = sum(1 for c in all_climbs if c.result in SEND_RESULTS)
+    total_sessions = len(all_sessions)
+    send_rate = round(total_sends / total_climbs * 100) if total_climbs else 0
+
+    return render_template(
+        "insights.html",
+        boulder_progression=boulder_progression,
+        route_progression=route_progression,
+        tag_stats=tag_stats,
+        boulder_send_rates=boulder_send_rates,
+        route_send_rates=route_send_rates,
+        top_projects=top_projects,
+        total_climbs=total_climbs,
+        total_sends=total_sends,
+        total_sessions=total_sessions,
+        send_rate=send_rate,
+        style_tags=STYLE_TAGS,
+    )
+
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, extra_files=[], exclude_patterns=["static/uploads/*"])

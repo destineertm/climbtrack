@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ClimbTrack – Insights</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+
+    <h1>Insights</h1>
+    <p class="muted">Your climbing data, visualized.</p>
+
+    <!-- Summary stats -->
+    <div class="stats-card">
+        <h3>Overview</h3>
+        <div class="stats-grid">
+            <div class="stat">
+                <div class="stat-value">{{ total_sessions }}</div>
+                <div class="stat-label">Sessions</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">{{ total_climbs }}</div>
+                <div class="stat-label">Climbs</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">{{ total_sends }}</div>
+                <div class="stat-label">Sends</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">{{ send_rate }}%</div>
+                <div class="stat-label">Send Rate</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grade Progression -->
+    {% if boulder_progression or route_progression %}
+    <p class="section-heading">Grade Progression</p>
+
+    {% if boulder_progression %}
+    <div class="card chart-card">
+        <h3>Boulder</h3>
+        <canvas id="boulder-progression-chart" height="120"></canvas>
+    </div>
+    {% endif %}
+
+    {% if route_progression %}
+    <div class="card chart-card">
+        <h3>Route</h3>
+        <canvas id="route-progression-chart" height="120"></canvas>
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">📈</div>
+        <p>Log some sends to see grade progression.</p>
+    </div>
+    {% endif %}
+
+    <!-- Send Rate by Grade -->
+    {% if boulder_send_rates or route_send_rates %}
+    <p class="section-heading">Send Rate by Grade</p>
+
+    {% if boulder_send_rates %}
+    <div class="card chart-card">
+        <h3>Boulder</h3>
+        <canvas id="boulder-sendrate-chart" height="120"></canvas>
+    </div>
+    {% endif %}
+
+    {% if route_send_rates %}
+    <div class="card chart-card">
+        <h3>Route</h3>
+        <canvas id="route-sendrate-chart" height="120"></canvas>
+    </div>
+    {% endif %}
+    {% endif %}
+
+    <!-- Style Breakdown -->
+    {% if tag_stats %}
+    <p class="section-heading">Style Breakdown</p>
+    <div class="card chart-card">
+        <h3>Sends vs Attempts by Style</h3>
+        <canvas id="style-chart" height="160"></canvas>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">🏷️</div>
+        <p>Add style tags to your climbs to see a breakdown here.</p>
+    </div>
+    {% endif %}
+
+    <!-- Most Worked Routes -->
+    {% if top_projects %}
+    <p class="section-heading">Most Worked Routes</p>
+    {% for route in top_projects %}
+    <div class="card">
+        <h3><a href="/route/{{ route.id }}">{{ route.name }}</a></h3>
+        <div class="mini-stats">
+            <span>{% if route.discipline == 'route' %}Route{% else %}Boulder{% endif %} · {{ route.grade }}</span>
+            <span>·</span>
+            <span>{{ route.climbs | length }} session{% if route.climbs | length != 1 %}s{% endif %}</span>
+            <span>·</span>
+            <span>{{ route.climbs | sum(attribute='attempts') }} total attempts</span>
+            {% if route.climbs | selectattr('result', 'in', ['send','flash','onsight']) | list %}
+            <span>·</span>
+            <span style="color: var(--success)">Sent</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <p style="margin-top: 24px;"><a href="/">← Back to Dashboard</a></p>
+
+    <script>
+        const accent = '#4f6ef7';
+        const success = '#2d9e6b';
+        const danger = '#d94f4f';
+        const muted = '#7a8194';
+        const border = '#dde0e6';
+
+        const chartDefaults = {
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { color: border }, ticks: { color: muted, font: { size: 11 } } },
+                y: { grid: { color: border }, ticks: { color: muted, font: { size: 11 } } }
+            }
+        };
+
+        // Boulder progression
+        {% if boulder_progression %}
+        new Chart(document.getElementById('boulder-progression-chart'), {
+            type: 'line',
+            data: {
+                labels: {{ boulder_progression | map(attribute='date') | list | tojson }},
+                datasets: [{
+                    data: {{ boulder_progression | map(attribute='rank') | list | tojson }},
+                    borderColor: accent,
+                    backgroundColor: 'rgba(79,110,247,0.08)',
+                    borderWidth: 2,
+                    pointBackgroundColor: accent,
+                    pointRadius: 4,
+                    fill: true,
+                    tension: 0.3,
+                }]
+            },
+            options: {
+                ...chartDefaults,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => {{ boulder_progression | map(attribute='grade') | list | tojson }}[ctx.dataIndex]
+                        }
+                    }
+                },
+                scales: {
+                    ...chartDefaults.scales,
+                    y: {
+                        ...chartDefaults.scales.y,
+                        ticks: {
+                            color: muted,
+                            font: { size: 11 },
+                            callback: (val) => {
+                                const grades = {{ boulder_progression | map(attribute='grade') | list | tojson }};
+                                const ranks = {{ boulder_progression | map(attribute='rank') | list | tojson }};
+                                const idx = ranks.indexOf(val);
+                                return idx >= 0 ? grades[idx] : '';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        {% endif %}
+
+        // Route progression
+        {% if route_progression %}
+        new Chart(document.getElementById('route-progression-chart'), {
+            type: 'line',
+            data: {
+                labels: {{ route_progression | map(attribute='date') | list | tojson }},
+                datasets: [{
+                    data: {{ route_progression | map(attribute='rank') | list | tojson }},
+                    borderColor: success,
+                    backgroundColor: 'rgba(45,158,107,0.08)',
+                    borderWidth: 2,
+                    pointBackgroundColor: success,
+                    pointRadius: 4,
+                    fill: true,
+                    tension: 0.3,
+                }]
+            },
+            options: {
+                ...chartDefaults,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => {{ route_progression | map(attribute='grade') | list | tojson }}[ctx.dataIndex]
+                        }
+                    }
+                },
+                scales: {
+                    ...chartDefaults.scales,
+                    y: {
+                        ...chartDefaults.scales.y,
+                        ticks: {
+                            color: muted,
+                            font: { size: 11 },
+                            callback: (val) => {
+                                const grades = {{ route_progression | map(attribute='grade') | list | tojson }};
+                                const ranks = {{ route_progression | map(attribute='rank') | list | tojson }};
+                                const idx = ranks.indexOf(val);
+                                return idx >= 0 ? grades[idx] : '';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        {% endif %}
+
+        // Boulder send rate by grade
+        {% if boulder_send_rates %}
+        new Chart(document.getElementById('boulder-sendrate-chart'), {
+            type: 'bar',
+            data: {
+                labels: {{ boulder_send_rates | map(attribute='grade') | list | tojson }},
+                datasets: [{
+                    data: {{ boulder_send_rates | map(attribute='rate') | list | tojson }},
+                    backgroundColor: (ctx) => ctx.raw >= 50 ? 'rgba(45,158,107,0.7)' : 'rgba(217,79,79,0.7)',
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                ...chartDefaults,
+                scales: {
+                    ...chartDefaults.scales,
+                    y: {
+                        ...chartDefaults.scales.y,
+                        min: 0, max: 100,
+                        ticks: { color: muted, font: { size: 11 }, callback: (v) => v + '%' }
+                    }
+                }
+            }
+        });
+        {% endif %}
+
+        // Route send rate by grade
+        {% if route_send_rates %}
+        new Chart(document.getElementById('route-sendrate-chart'), {
+            type: 'bar',
+            data: {
+                labels: {{ route_send_rates | map(attribute='grade') | list | tojson }},
+                datasets: [{
+                    data: {{ route_send_rates | map(attribute='rate') | list | tojson }},
+                    backgroundColor: (ctx) => ctx.raw >= 50 ? 'rgba(45,158,107,0.7)' : 'rgba(217,79,79,0.7)',
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                ...chartDefaults,
+                scales: {
+                    ...chartDefaults.scales,
+                    y: {
+                        ...chartDefaults.scales.y,
+                        min: 0, max: 100,
+                        ticks: { color: muted, font: { size: 11 }, callback: (v) => v + '%' }
+                    }
+                }
+            }
+        });
+        {% endif %}
+
+        // Style breakdown
+        {% if tag_stats %}
+        const tags = {{ tag_stats.keys() | list | tojson }};
+        const sends = {{ tag_stats.values() | map(attribute='sends') | list | tojson }};
+        const attempts = {{ tag_stats.values() | map(attribute='attempts') | list | tojson }};
+
+        new Chart(document.getElementById('style-chart'), {
+            type: 'bar',
+            data: {
+                labels: tags,
+                datasets: [
+                    {
+                        label: 'Sends',
+                        data: sends,
+                        backgroundColor: 'rgba(45,158,107,0.7)',
+                        borderRadius: 4,
+                    },
+                    {
+                        label: 'Attempts',
+                        data: attempts,
+                        backgroundColor: 'rgba(217,79,79,0.5)',
+                        borderRadius: 4,
+                    }
+                ]
+            },
+            options: {
+                ...chartDefaults,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: { color: muted, font: { size: 11 } }
+                    }
+                },
+                scales: {
+                    ...chartDefaults.scales,
+                    x: { ...chartDefaults.scales.x, stacked: false },
+                    y: { ...chartDefaults.scales.y, stacked: false, ticks: { color: muted, font: { size: 11 }, stepSize: 1 } }
+                }
+            }
+        });
+        {% endif %}
+    </script>
+
+</body>
+</html>

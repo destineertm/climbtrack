@@ -43,6 +43,19 @@
         </div>
 
         <div class="field">
+            <label>Style Tags</label>
+            <div class="tag-grid">
+                {% for tag in style_tags %}
+                <label class="tag-option">
+                    <input type="checkbox" name="style_tags" value="{{ tag }}"
+                        {% if tag in (climb.get_style_tags()) %}checked{% endif %}>
+                    {{ tag }}
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="field">
             <label>Notes (optional)</label>
             <textarea name="notes" rows="3" placeholder="Beta, how it felt, what to work on next time...">{{ climb.notes or '' }}</textarea>
         </div>

@@ -444,7 +444,71 @@ button[type="submit"]:hover {
     border-left: 3px solid var(--border-strong);
 }
 
-/* ---- Cover image ---- */
+.chart-card {
+    margin-bottom: 16px;
+}
+
+.chart-card h3 {
+    margin-bottom: 16px;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+/* ---- Style tags ---- */
+
+.tag-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.tag-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+}
+
+.tag-option:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-light);
+}
+
+.tag-option input[type="checkbox"] {
+    width: 13px;
+    height: 13px;
+    margin: 0;
+    padding: 0;
+    accent-color: var(--accent);
+}
+
+.tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 8px 0;
+}
+
+.tag {
+    background: var(--accent-light);
+    color: var(--accent);
+    border: 1px solid #c7d4fc;
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
 
 .cover-image {
     width: 100%;
