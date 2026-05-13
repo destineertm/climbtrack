@@ -6,6 +6,9 @@
 </head>
 <body>
 
+    <nav class="top-nav"><a href="/">← Dashboard</a></nav>
+
+
     <h1>Start a Session</h1>
 
     <form method="POST">
@@ -37,7 +40,7 @@
 
     </form>
 
-    <p style="margin-top: 16px;"><a href="/">← Back to Dashboard</a></p>
+    
 
     <script>
         const gymNames = {{ existing_gyms | map(attribute='name') | list | tojson }};

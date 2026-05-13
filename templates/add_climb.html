@@ -6,6 +6,9 @@
 </head>
 <body>
 
+    <nav class="top-nav"><a href="/">← Dashboard</a></nav>
+
+
     <h1>Log a Climb</h1>
     <p class="muted">Session: {{ session.gym.name if session.gym else session.location }} ({{ session.session_type }})</p>
 
@@ -79,7 +82,7 @@
 
     </form>
 
-    <p style="margin-top: 16px;"><a href="/session/{{ session.id }}">← Back to Session</a></p>
+    
 
     <script>
         const boulderGrades = {{ boulder_grades | tojson }};

@@ -6,6 +6,9 @@
 </head>
 <body>
 
+    <nav class="top-nav"><a href="/">← Dashboard</a></nav>
+
+
     <h1>{{ session.gym.name if session.gym else session.location }}</h1>
     <p class="muted">
         {{ session.date.strftime('%B %d, %Y') }} ·
@@ -87,7 +90,7 @@
         </div>
     {% endif %}
 
-    <p style="margin-top: 16px;"><a href="/">← Back to Dashboard</a></p>
+    
 
 </body>
 </html>

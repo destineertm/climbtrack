@@ -34,6 +34,46 @@
             </div>
         </div>
     </div>
+
+    {% if trends.this_month_climbs > 0 or trends.streak > 1 %}
+    <div class="trends-card">
+        <p class="section-heading" style="margin-top: 0">This Month</p>
+        <div class="trends-grid">
+            <div class="trend-item">
+                <span class="trend-value">{{ trends.this_month_climbs }}</span>
+                <span class="trend-label">climbs</span>
+                {% if trends.last_month_climbs > 0 %}
+                <span class="trend-delta {% if trends.this_month_climbs >= trends.last_month_climbs %}trend-up{% else %}trend-down{% endif %}">
+                    {% if trends.this_month_climbs >= trends.last_month_climbs %}▲{% else %}▼{% endif %}
+                    vs {{ trends.last_month_climbs }} last month
+                </span>
+                {% endif %}
+            </div>
+            <div class="trend-item">
+                <span class="trend-value">{{ trends.this_month_sends }}</span>
+                <span class="trend-label">sends</span>
+                {% if trends.rate_diff is not none %}
+                <span class="trend-delta {% if trends.rate_diff >= 0 %}trend-up{% else %}trend-down{% endif %}">
+                    {% if trends.rate_diff >= 0 %}▲{% else %}▼{% endif %}
+                    {{ trends.rate_diff | abs }}% send rate
+                </span>
+                {% endif %}
+            </div>
+            {% if trends.top_tag %}
+            <div class="trend-item">
+                <span class="trend-value">{{ trends.top_tag }}</span>
+                <span class="trend-label">top style</span>
+            </div>
+            {% endif %}
+            {% if trends.streak > 1 %}
+            <div class="trend-item">
+                <span class="trend-value">{{ trends.streak }}</span>
+                <span class="trend-label">day streak 🔥</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
     {% endif %}
 
     <div class="btn-row">
@@ -41,6 +81,7 @@
         <a href="/projects" class="btn btn-secondary">⭐ Projects</a>
         <a href="/gyms" class="btn btn-secondary">🏢 Gyms</a>
         <a href="/insights" class="btn btn-secondary">📈 Insights</a>
+        <a href="/training" class="btn btn-secondary">🧠 Training</a>
     </div>
 
     <hr>

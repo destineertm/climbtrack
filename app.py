@@ -223,12 +223,25 @@ def view_gym(gym_id):
     routes = list(gym.routes)
     all_climbs = [c for s in sessions for c in s.climbs]
     stats = compute_stats(all_climbs)
+
+    # Style breakdown for this gym
+    tag_stats = {tag: {'sends': 0, 'attempts': 0} for tag in STYLE_TAGS}
+    for c in all_climbs:
+        for tag in c.get_style_tags():
+            if tag in tag_stats:
+                if c.result in SEND_RESULTS:
+                    tag_stats[tag]['sends'] += 1
+                else:
+                    tag_stats[tag]['attempts'] += 1
+    tag_stats = {k: v for k, v in tag_stats.items() if v['sends'] + v['attempts'] > 0}
+
     return render_template(
         "gym_detail.html",
         gym=gym,
         sessions=sessions,
         routes=routes,
         stats=stats,
+        tag_stats=tag_stats,
         result_labels=RESULT_LABELS,
     )
 
@@ -263,11 +276,57 @@ def home():
     all_time = compute_stats(all_climbs)
     all_time['total_sessions'] = len(sessions)
 
+    # --- Monthly trends ---
+    from datetime import date
+    today = datetime.utcnow()
+    this_month_start = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    last_month_start = (this_month_start.replace(day=1) - __import__('datetime').timedelta(days=1)).replace(day=1)
+
+    this_month_climbs = [c for c in all_climbs if c.session and c.session.date >= this_month_start]
+    last_month_climbs = [c for c in all_climbs if c.session and last_month_start <= c.session.date < this_month_start]
+
+    this_month_stats = compute_stats(this_month_climbs)
+    last_month_stats = compute_stats(last_month_climbs)
+
+    # Send rate trend
+    rate_diff = this_month_stats['send_rate'] - last_month_stats['send_rate'] if last_month_climbs else None
+
+    # Most active style tag this month
+    tag_counts = {}
+    for c in this_month_climbs:
+        for tag in c.get_style_tags():
+            tag_counts[tag] = tag_counts.get(tag, 0) + 1
+    top_tag = max(tag_counts, key=tag_counts.get) if tag_counts else None
+
+    # Climbing streak — consecutive days with at least one session
+    session_dates = sorted(set(s.date.date() for s in sessions), reverse=True)
+    streak = 0
+    if session_dates:
+        from datetime import date, timedelta
+        check = date.today()
+        for d in session_dates:
+            if d == check or d == check - timedelta(days=1):
+                streak += 1
+                check = d
+            else:
+                break
+
+    trends = {
+        'this_month_climbs': this_month_stats['total'],
+        'last_month_climbs': last_month_stats['total'],
+        'this_month_sends': this_month_stats['sends'],
+        'this_month_send_rate': this_month_stats['send_rate'],
+        'rate_diff': rate_diff,
+        'top_tag': top_tag,
+        'streak': streak,
+    }
+
     return render_template(
         "index.html",
         sessions=sessions,
         session_stats=session_stats,
-        all_time=all_time
+        all_time=all_time,
+        trends=trends,
     )
 
 
@@ -567,6 +626,182 @@ def edit_climb(climb_id):
     )
 
 
+@app.route("/training")
+def training_page():
+    all_climbs = Climb.query.join(Session).order_by(Session.date).all()
+    all_sessions = Session.query.order_by(Session.date).all()
+    total_sessions = len(all_sessions)
+    total_climbs = len(all_climbs)
+    total_sends = sum(1 for c in all_climbs if c.result in SEND_RESULTS)
+    send_rate = round(total_sends / total_climbs * 100) if total_climbs else 0
+
+    # Reuse tag_stats for weakness detection
+    tag_stats = {tag: {'sends': 0, 'attempts': 0} for tag in STYLE_TAGS}
+    for c in all_climbs:
+        for tag in c.get_style_tags():
+            if tag in tag_stats:
+                if c.result in SEND_RESULTS:
+                    tag_stats[tag]['sends'] += 1
+                else:
+                    tag_stats[tag]['attempts'] += 1
+    tag_stats = {k: v for k, v in tag_stats.items() if v['sends'] + v['attempts'] > 0}
+
+    training = None
+    if total_sessions >= 10:
+        from datetime import date, timedelta
+
+        recent_sessions = all_sessions[-5:]
+
+        def best_grade(sessions, discipline):
+            grades = [
+                c.grade for s in sessions for c in s.climbs
+                if c.result in SEND_RESULTS and c.discipline == discipline and c.grade
+            ]
+            if not grades:
+                return None, -1
+            best = max(grades, key=lambda g: GRADE_RANK.get((discipline, g), -1))
+            return best, GRADE_RANK.get((discipline, best), -1)
+
+        # All-time peak (across all sessions)
+        peak_b, peak_b_rank = best_grade(all_sessions, 'boulder')
+        peak_r, peak_r_rank = best_grade(all_sessions, 'route')
+
+        # Recent best (last 5 sessions)
+        recent_b, recent_b_rank = best_grade(recent_sessions, 'boulder')
+        recent_r, recent_r_rank = best_grade(recent_sessions, 'route')
+
+        # Progressing = recent best matches or exceeds all-time peak
+        # Plateaued = recent best is more than 1 grade below all-time peak
+        boulder_progressing = recent_b and peak_b and recent_b_rank >= peak_b_rank
+        route_progressing = recent_r and peak_r and recent_r_rank >= peak_r_rank
+        boulder_plateau = recent_b and peak_b and recent_b_rank < peak_b_rank - 1
+        route_plateau = recent_r and peak_r and recent_r_rank < peak_r_rank - 1
+
+        overall_send_rate = send_rate / 100 if total_climbs else 0
+        tag_send_rates = {}
+        for tag, data in tag_stats.items():
+            total_tag = data['sends'] + data['attempts']
+            if total_tag >= 3:
+                tag_send_rates[tag] = data['sends'] / total_tag
+
+        weaknesses = sorted(
+            [t for t, r in tag_send_rates.items() if r < overall_send_rate - 0.05],
+            key=lambda t: tag_send_rates[t]
+        )[:3]
+
+        strengths = sorted(
+            [t for t, r in tag_send_rates.items() if r > overall_send_rate + 0.05],
+            key=lambda t: tag_send_rates[t],
+            reverse=True
+        )[:3]
+
+        today = datetime.utcnow().date()
+        recent_dates = sorted(set(
+            s.date.date() for s in all_sessions
+            if (today - s.date.date()).days <= 7
+        ), reverse=True)
+
+        days_since_last = (today - all_sessions[-1].date.date()).days if all_sessions else 999
+        sessions_last_7 = len(recent_dates)
+
+        streak = 0
+        check = today
+        for d in recent_dates:
+            if d == check or d == check - timedelta(days=1):
+                streak += 1
+                check = d
+            else:
+                break
+
+        if streak >= 3:
+            fatigue = 'high'
+            fatigue_msg = f"You've climbed {streak} days in a row. Your body needs rest to adapt."
+        elif days_since_last >= 5:
+            fatigue = 'low'
+            fatigue_msg = f"It's been {days_since_last} days since your last session. Time to get back on the wall!"
+        elif sessions_last_7 >= 4:
+            fatigue = 'moderate'
+            fatigue_msg = f"{sessions_last_7} sessions this week. Consider an easy session or rest day soon."
+        else:
+            fatigue = 'good'
+            fatigue_msg = "Your training load looks balanced. Keep it up."
+
+        if fatigue == 'high':
+            primary_rec = "Rest day recommended"
+            primary_detail = "Take 1-2 days off. Finger tendons adapt slower than muscle — rest is when you get stronger."
+        elif boulder_plateau and route_plateau:
+            primary_rec = "You may be plateaued"
+            primary_detail = f"Your top grades haven't improved in 5 sessions (boulder: {recent_b}, route: {recent_r}). Try targeting your weaknesses: {', '.join(weaknesses[:2]) if weaknesses else 'vary your style'}."
+        elif weaknesses:
+            primary_rec = f"Focus on your weaknesses: {', '.join(weaknesses)}"
+            primary_detail = "Your send rate on these styles is below your average. Deliberately targeting weaknesses is the fastest path to improvement."
+        elif boulder_progressing or route_progressing:
+            primary_rec = "You're progressing — keep pushing grades"
+            primary_detail = f"{'Boulder grades improving. ' if boulder_progressing else ''}{'Route grades improving. ' if route_progressing else ''}Maintain the momentum."
+        else:
+            primary_rec = "Solid foundation — vary your sessions"
+            primary_detail = "Mix hard project sessions with volume days to build both strength and endurance."
+
+        focus_styles = weaknesses[:2] if weaknesses else ['overhang', 'slab']
+
+        if fatigue == 'high':
+            weekly_plan = [
+                {'day': 'Today', 'type': 'Rest', 'detail': 'Full rest. Stretch if you want.'},
+                {'day': 'Tomorrow', 'type': 'Rest', 'detail': 'Light activity only — walk, yoga.'},
+                {'day': 'Day 3', 'type': 'Easy session', 'detail': 'Low volume, easy grades. Focus on footwork and technique.'},
+                {'day': 'Day 4', 'type': 'Rest', 'detail': 'Rest day.'},
+                {'day': 'Day 5', 'type': 'Project session', 'detail': 'Back to full strength. Work your projects.'},
+                {'day': 'Day 6', 'type': 'Volume session', 'detail': f'High volume, moderate grades. Focus on {focus_styles[0]}.'},
+                {'day': 'Day 7', 'type': 'Rest', 'detail': 'End the week with rest.'},
+            ]
+        elif fatigue == 'low':
+            weekly_plan = [
+                {'day': 'Today', 'type': 'Get on the wall', 'detail': 'Any session — just climb. Momentum matters.'},
+                {'day': 'Tomorrow', 'type': 'Rest', 'detail': 'Rest day.'},
+                {'day': 'Day 3', 'type': 'Project session', 'detail': 'Work your hardest projects with fresh skin.'},
+                {'day': 'Day 4', 'type': 'Rest', 'detail': 'Rest day.'},
+                {'day': 'Day 5', 'type': 'Weakness session', 'detail': f'Deliberately target {", ".join(focus_styles)} problems.'},
+                {'day': 'Day 6', 'type': 'Rest', 'detail': 'Rest day.'},
+                {'day': 'Day 7', 'type': 'Volume session', 'detail': 'High volume at comfortable grades. Build endurance.'},
+            ]
+        else:
+            weekly_plan = [
+                {'day': 'Today', 'type': 'Project session', 'detail': 'Push your limit grades. Aim for sends.'},
+                {'day': 'Tomorrow', 'type': 'Rest', 'detail': 'Rest day. Let the tendons recover.'},
+                {'day': 'Day 3', 'type': 'Weakness session', 'detail': f'Focus on {", ".join(focus_styles)}. Pick problems that specifically target these styles.'},
+                {'day': 'Day 4', 'type': 'Rest', 'detail': 'Rest day.'},
+                {'day': 'Day 5', 'type': 'Volume session', 'detail': 'High volume at 2 grades below your max. Build a base.'},
+                {'day': 'Day 6', 'type': 'Rest or easy', 'detail': 'Light session or rest — listen to your body.'},
+                {'day': 'Day 7', 'type': 'Rest', 'detail': 'End the week with rest.'},
+            ]
+
+        training = {
+            'boulder_plateau': boulder_plateau,
+            'route_plateau': route_plateau,
+            'boulder_progressing': boulder_progressing,
+            'route_progressing': route_progressing,
+            'recent_boulder': recent_b,
+            'peak_boulder': peak_b,
+            'recent_route': recent_r,
+            'peak_route': peak_r,
+            'weaknesses': weaknesses,
+            'strengths': strengths,
+            'fatigue': fatigue,
+            'fatigue_msg': fatigue_msg,
+            'primary_rec': primary_rec,
+            'primary_detail': primary_detail,
+            'weekly_plan': weekly_plan,
+            'sessions_last_7': sessions_last_7,
+            'days_since_last': days_since_last,
+        }
+
+    return render_template(
+        "training.html",
+        training=training,
+        total_sessions=total_sessions,
+    )
+
+
 @app.route("/climb/<int:climb_id>/delete", methods=["POST"])
 def delete_climb(climb_id):
     climb = Climb.query.get_or_404(climb_id)
@@ -621,7 +856,12 @@ def insights():
                 else:
                     tag_stats[tag]['attempts'] += 1
 
-    # Only include tags that have been used
+    # Only include tags that have been used — as ordered list for safe JS rendering
+    tag_stats_list = [
+        {'tag': tag, 'sends': data['sends'], 'attempts': data['attempts']}
+        for tag, data in tag_stats.items()
+        if data['sends'] + data['attempts'] > 0
+    ]
     tag_stats = {k: v for k, v in tag_stats.items() if v['sends'] + v['attempts'] > 0}
 
     # --- Send rate by grade (boulder) ---
@@ -660,11 +900,164 @@ def insights():
     total_sessions = len(all_sessions)
     send_rate = round(total_sends / total_climbs * 100) if total_climbs else 0
 
+    # --- Training intelligence (requires 10+ sessions) ---
+    training = None
+    if total_sessions >= 10:
+        from datetime import date, timedelta
+
+        # 1. Plateau detection — all-time peak vs recent best (last 5 sessions)
+        recent_sessions = all_sessions[-5:]
+
+        def best_grade_in(sessions, discipline):
+            grades = [
+                c.grade for s in sessions for c in s.climbs
+                if c.result in SEND_RESULTS and c.discipline == discipline and c.grade
+            ]
+            if not grades:
+                return None, -1
+            best = max(grades, key=lambda g: GRADE_RANK.get((discipline, g), -1))
+            return best, GRADE_RANK.get((discipline, best), -1)
+
+        peak_b, peak_b_rank = best_grade_in(all_sessions, 'boulder')
+        peak_r, peak_r_rank = best_grade_in(all_sessions, 'route')
+        recent_b, recent_b_rank = best_grade_in(recent_sessions, 'boulder')
+        recent_r, recent_r_rank = best_grade_in(recent_sessions, 'route')
+
+        boulder_progressing = recent_b and peak_b and recent_b_rank >= peak_b_rank
+        route_progressing = recent_r and peak_r and recent_r_rank >= peak_r_rank
+        boulder_plateau = recent_b and peak_b and recent_b_rank < peak_b_rank - 1
+        route_plateau = recent_r and peak_r and recent_r_rank < peak_r_rank - 1
+
+        # 2. Weakness detection — tags with below-average send rate
+        overall_send_rate = send_rate / 100 if total_climbs else 0
+        tag_send_rates = {}
+        for tag, data in tag_stats.items():
+            total_tag = data['sends'] + data['attempts']
+            if total_tag >= 3:  # need at least 3 data points
+                tag_send_rates[tag] = data['sends'] / total_tag
+
+        weaknesses = sorted(
+            [t for t, r in tag_send_rates.items() if r < overall_send_rate - 0.05],
+            key=lambda t: tag_send_rates[t]
+        )[:3]
+
+        strengths = sorted(
+            [t for t, r in tag_send_rates.items() if r > overall_send_rate + 0.05],
+            key=lambda t: tag_send_rates[t],
+            reverse=True
+        )[:3]
+
+        # 3. Fatigue signal — sessions in last 7 days
+        today = datetime.utcnow().date()
+        recent_dates = sorted(set(
+            s.date.date() for s in all_sessions
+            if (today - s.date.date()).days <= 7
+        ), reverse=True)
+
+        days_since_last = (today - all_sessions[-1].date.date()).days if all_sessions else 999
+        sessions_last_7 = len(recent_dates)
+
+        # Consecutive day streak
+        streak = 0
+        check = today
+        for d in recent_dates:
+            if d == check or d == check - timedelta(days=1):
+                streak += 1
+                check = d
+            else:
+                break
+
+        if streak >= 3:
+            fatigue = 'high'
+            fatigue_msg = f"You've climbed {streak} days in a row. Your body needs rest to adapt."
+        elif days_since_last >= 5:
+            fatigue = 'low'
+            fatigue_msg = f"It's been {days_since_last} days since your last session. Time to get back on the wall!"
+        elif sessions_last_7 >= 4:
+            fatigue = 'moderate'
+            fatigue_msg = f"{sessions_last_7} sessions this week. Consider an easy session or rest day soon."
+        else:
+            fatigue = 'good'
+            fatigue_msg = "Your training load looks balanced. Keep it up."
+
+        # 4. Primary recommendation
+        if fatigue == 'high':
+            primary_rec = "Rest day recommended"
+            primary_detail = "Take 1-2 days off. Finger tendons adapt slower than muscle — rest is when you get stronger."
+        elif boulder_plateau and route_plateau:
+            primary_rec = "You may be plateaued"
+            primary_detail = f"Your top grades haven't improved in 5 sessions (boulder: {recent_b}, route: {recent_r}). Try targeting your weaknesses: {', '.join(weaknesses[:2]) if weaknesses else 'vary your style'}."
+        elif weaknesses:
+            primary_rec = f"Focus on your weaknesses: {', '.join(weaknesses)}"
+            primary_detail = "Your send rate on these styles is below your average. Deliberately targeting weaknesses is the fastest path to improvement."
+        elif boulder_progressing or route_progressing:
+            primary_rec = "You're progressing — keep pushing grades"
+            primary_detail = f"{'Boulder grades improving. ' if boulder_progressing else ''}{'Route grades improving. ' if route_progressing else ''}Maintain the momentum."
+        else:
+            primary_rec = "Solid foundation — vary your sessions"
+            primary_detail = "Mix hard project sessions with volume days to build both strength and endurance."
+
+        # 5. Weekly plan
+        focus_styles = weaknesses[:2] if weaknesses else ['overhang', 'slab']
+        weekly_plan = []
+
+        if fatigue == 'high':
+            weekly_plan = [
+                {'day': 'Today', 'type': 'Rest', 'detail': 'Full rest. Stretch if you want.'},
+                {'day': 'Tomorrow', 'type': 'Rest', 'detail': 'Light activity only — walk, yoga.'},
+                {'day': 'Day 3', 'type': 'Easy session', 'detail': f'Low volume, easy grades. Focus on footwork and technique.'},
+                {'day': 'Day 4', 'type': 'Rest', 'detail': 'Rest day.'},
+                {'day': 'Day 5', 'type': 'Project session', 'detail': f'Back to full strength. Work your projects.'},
+                {'day': 'Day 6', 'type': 'Volume session', 'detail': f'High volume, moderate grades. Focus on {focus_styles[0]}.'},
+                {'day': 'Day 7', 'type': 'Rest', 'detail': 'End the week with rest.'},
+            ]
+        elif fatigue == 'low':
+            weekly_plan = [
+                {'day': 'Today', 'type': 'Get on the wall', 'detail': 'Any session — just climb. Momentum matters.'},
+                {'day': 'Tomorrow', 'type': 'Rest', 'detail': 'Rest day.'},
+                {'day': 'Day 3', 'type': 'Project session', 'detail': 'Work your hardest projects with fresh skin.'},
+                {'day': 'Day 4', 'type': 'Rest', 'detail': 'Rest day.'},
+                {'day': 'Day 5', 'type': 'Weakness session', 'detail': f'Deliberately target {", ".join(focus_styles)} problems.'},
+                {'day': 'Day 6', 'type': 'Rest', 'detail': 'Rest day.'},
+                {'day': 'Day 7', 'type': 'Volume session', 'detail': 'High volume at comfortable grades. Build endurance.'},
+            ]
+        else:
+            weekly_plan = [
+                {'day': 'Today', 'type': 'Project session', 'detail': 'Push your limit grades. Aim for sends.'},
+                {'day': 'Tomorrow', 'type': 'Rest', 'detail': 'Rest day. Let the tendons recover.'},
+                {'day': 'Day 3', 'type': 'Weakness session', 'detail': f'Focus on {", ".join(focus_styles)}. Pick problems that specifically target these styles.'},
+                {'day': 'Day 4', 'type': 'Rest', 'detail': 'Rest day.'},
+                {'day': 'Day 5', 'type': 'Volume session', 'detail': 'High volume at 2 grades below your max. Build a base.'},
+                {'day': 'Day 6', 'type': 'Rest or easy', 'detail': 'Light session or rest — listen to your body.'},
+                {'day': 'Day 7', 'type': 'Rest', 'detail': 'End the week with rest.'},
+            ]
+
+        training = {
+            'boulder_plateau': boulder_plateau,
+            'route_plateau': route_plateau,
+            'boulder_progressing': boulder_progressing,
+            'route_progressing': route_progressing,
+            'recent_boulder': recent_b,
+            'peak_boulder': peak_b,
+            'recent_route': recent_r,
+            'peak_route': peak_r,
+            'weaknesses': weaknesses,
+            'strengths': strengths,
+            'fatigue': fatigue,
+            'fatigue_msg': fatigue_msg,
+            'primary_rec': primary_rec,
+            'primary_detail': primary_detail,
+            'weekly_plan': weekly_plan,
+            'sessions_last_7': sessions_last_7,
+            'days_since_last': days_since_last,
+        }
+
     return render_template(
         "insights.html",
         boulder_progression=boulder_progression,
         route_progression=route_progression,
         tag_stats=tag_stats,
+        tag_stats_list=tag_stats_list,
         boulder_send_rates=boulder_send_rates,
         route_send_rates=route_send_rates,
         top_projects=top_projects,
@@ -673,6 +1066,7 @@ def insights():
         total_sessions=total_sessions,
         send_rate=send_rate,
         style_tags=STYLE_TAGS,
+        training=training,
     )
 
 

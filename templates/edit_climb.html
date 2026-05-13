@@ -6,6 +6,9 @@
 </head>
 <body>
 
+    <nav class="top-nav"><a href="/">← Dashboard</a></nav>
+
+
     <h1>Edit Climb</h1>
 
     <form method="POST">
@@ -64,7 +67,7 @@
 
     </form>
 
-    <p style="margin-top: 16px;"><a href="/session/{{ climb.session_id }}">← Cancel</a></p>
+    
 
     <script>
         const boulderGrades = {{ boulder_grades | tojson }};

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ClimbTrack – Training</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <nav class="top-nav"><a href="/">← Dashboard</a> &nbsp;·&nbsp; <a href="/insights">Insights</a></nav>
+
+    <h1>Training Plan</h1>
+    <p class="muted">Personalized recommendations based on your climbing history.</p>
+
+    {% if training %}
+
+    <!-- Primary recommendation -->
+    <div class="card training-card training-{{ training.fatigue }}" style="margin-top: 20px;">
+        <div class="training-header">
+            <span class="training-badge training-badge-{{ training.fatigue }}">
+                {% if training.fatigue == 'high' %}Rest needed
+                {% elif training.fatigue == 'low' %}Get climbing
+                {% elif training.fatigue == 'moderate' %}Ease off
+                {% else %}On track{% endif %}
+            </span>
+            <p class="training-rec">{{ training.primary_rec }}</p>
+        </div>
+        <p class="muted">{{ training.primary_detail }}</p>
+        <p class="muted" style="margin-top: 8px;">{{ training.fatigue_msg }}</p>
+    </div>
+
+    <!-- Progression status -->
+    <p class="section-heading">Progression Status</p>
+    <div class="card">
+        <div class="progression-grid">
+            <div class="progression-item">
+                <span class="progression-label">Boulder</span>
+                {% if training.boulder_progressing %}
+                <span class="progression-status status-up">At or near your peak — {{ training.recent_boulder }}</span>
+                {% elif training.boulder_plateau %}
+                <span class="progression-status status-flat">Below peak recently — peak: {{ training.peak_boulder }}, recent: {{ training.recent_boulder }}</span>
+                {% else %}
+                <span class="progression-status status-neutral">Not enough send data</span>
+                {% endif %}
+            </div>
+            <div class="progression-item">
+                <span class="progression-label">Route</span>
+                {% if training.route_progressing %}
+                <span class="progression-status status-up">At or near your peak — {{ training.recent_route }}</span>
+                {% elif training.route_plateau %}
+                <span class="progression-status status-flat">Below peak recently — peak: {{ training.peak_route }}, recent: {{ training.recent_route }}</span>
+                {% else %}
+                <span class="progression-status status-neutral">Not enough send data</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Style analysis -->
+    {% if training.weaknesses or training.strengths %}
+    <p class="section-heading">Style Analysis</p>
+    <div class="card">
+        {% if training.strengths %}
+        <p class="muted" style="margin-bottom: 8px;">Strengths</p>
+        <div class="tag-list" style="margin-bottom: 16px;">
+            {% for tag in training.strengths %}
+            <span class="tag tag-strength">{{ tag }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% if training.weaknesses %}
+        <p class="muted" style="margin-bottom: 8px;">Weaknesses — focus here</p>
+        <div class="tag-list">
+            {% for tag in training.weaknesses %}
+            <span class="tag tag-weakness">{{ tag }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Weekly plan -->
+    <p class="section-heading">Suggested Week</p>
+    <div class="weekly-plan">
+        {% for day in training.weekly_plan %}
+        <div class="week-day week-day-{{ day.type | lower | replace(' ', '-') | replace('/', '-') }}">
+            <div class="week-day-header">
+                <span class="week-day-label">{{ day.day }}</span>
+                <span class="week-day-type">{{ day.type }}</span>
+            </div>
+            <p class="week-day-detail">{{ day.detail }}</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="empty-state" style="margin-top: 20px;">
+        <div class="empty-state-icon">🧠</div>
+        <p>Training recommendations unlock after 10 sessions. You have {{ total_sessions }} so far — keep climbing!</p>
+    </div>
+    {% endif %}
+
+</body>
+</html>

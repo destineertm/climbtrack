@@ -7,8 +7,15 @@
 </head>
 <body>
 
+    <nav class="top-nav"><a href="/">← Dashboard</a></nav>
+
+
     <h1>Insights</h1>
     <p class="muted">Your climbing data, visualized.</p>
+
+    <div class="btn-row">
+        <a href="/training" class="btn btn-secondary">🧠 Training Plan</a>
+    </div>
 
     <!-- Summary stats -->
     <div class="stats-card">
@@ -111,7 +118,7 @@
     {% endfor %}
     {% endif %}
 
-    <p style="margin-top: 24px;"><a href="/">← Back to Dashboard</a></p>
+    
 
     <script>
         const accent = '#4f6ef7';
@@ -276,9 +283,10 @@
 
         // Style breakdown
         {% if tag_stats %}
-        const tags = {{ tag_stats.keys() | list | tojson }};
-        const sends = {{ tag_stats.values() | map(attribute='sends') | list | tojson }};
-        const attempts = {{ tag_stats.values() | map(attribute='attempts') | list | tojson }};
+        const tagData = {{ tag_stats_list | tojson }};
+        const tags = tagData.map(d => d.tag);
+        const sends = tagData.map(d => d.sends);
+        const attempts = tagData.map(d => d.attempts);
 
         new Chart(document.getElementById('style-chart'), {
             type: 'bar',

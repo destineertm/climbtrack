@@ -6,6 +6,9 @@
 </head>
 <body>
 
+    <nav class="top-nav"><a href="/">← Dashboard</a> &nbsp;·&nbsp; <a href="/projects">Projects</a></nav>
+
+
     {% if route.image_filename %}
     <img src="{{ url_for('static', filename='uploads/' + route.image_filename) }}"
          alt="{{ route.name }}" class="cover-image">
@@ -85,11 +88,6 @@
         </div>
     {% endif %}
 
-    <p style="margin-top: 16px;">
-        <a href="/projects">← Projects</a>
-        &nbsp;·&nbsp;
-        <a href="/">Dashboard</a>
-    </p>
-
+    
 </body>
 </html>

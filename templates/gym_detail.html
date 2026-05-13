@@ -3,8 +3,12 @@
 <head>
     <title>ClimbTrack – {{ gym.name }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
+
+    <nav class="top-nav"><a href="/">← Dashboard</a> &nbsp;·&nbsp; <a href="/gyms">All Gyms</a></nav>
+
 
     {% if gym.image_filename %}
     <img src="{{ url_for('static', filename='uploads/' + gym.image_filename) }}"
@@ -50,6 +54,13 @@
         <a href="/gym/{{ gym.id }}/edit" class="btn btn-secondary">Edit Gym</a>
     </div>
 
+    {% if tag_stats %}
+    <p class="section-heading">Style Breakdown</p>
+    <div class="card chart-card">
+        <canvas id="gym-style-chart" height="140"></canvas>
+    </div>
+    {% endif %}
+
     <p class="section-heading">Sessions ({{ sessions | length }})</p>
 
     {% if sessions %}
@@ -85,11 +96,38 @@
         {% endfor %}
     {% endif %}
 
-    <p style="margin-top: 16px;">
-        <a href="/gyms">← All Gyms</a>
-        &nbsp;·&nbsp;
-        <a href="/">Dashboard</a>
-    </p>
+    
+    {% if tag_stats %}
+    <script>
+        new Chart(document.getElementById('gym-style-chart'), {
+            type: 'bar',
+            data: {
+                labels: {{ tag_stats.keys() | list | tojson }},
+                datasets: [
+                    {
+                        label: 'Sends',
+                        data: {{ tag_stats.values() | map(attribute='sends') | list | tojson }},
+                        backgroundColor: 'rgba(45,158,107,0.7)',
+                        borderRadius: 4,
+                    },
+                    {
+                        label: 'Attempts',
+                        data: {{ tag_stats.values() | map(attribute='attempts') | list | tojson }},
+                        backgroundColor: 'rgba(217,79,79,0.5)',
+                        borderRadius: 4,
+                    }
+                ]
+            },
+            options: {
+                plugins: { legend: { display: true, labels: { color: '#7a8194', font: { size: 11 } } } },
+                scales: {
+                    x: { grid: { color: '#dde0e6' }, ticks: { color: '#7a8194', font: { size: 11 } } },
+                    y: { grid: { color: '#dde0e6' }, ticks: { color: '#7a8194', font: { size: 11 }, stepSize: 1 } }
+                }
+            }
+        });
+    </script>
+    {% endif %}
 
 </body>
 </html>
