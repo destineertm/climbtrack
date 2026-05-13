@@ -1,78 +1,92 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>ClimbTrack – {{ gym.name }}</title>
+    <title>ClimbTrack – {{ route.name }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
-    <h1>{{ gym.name }}</h1>
-    {% if gym.is_outdoor %}<p class="muted">⛰️ Outdoor</p>{% endif %}
+    {% if route.image_filename %}
+    <img src="{{ url_for('static', filename='uploads/' + route.image_filename) }}"
+         alt="{{ route.name }}" class="cover-image">
+    {% else %}
+    <div class="cover-placeholder">No cover photo — add one by editing this route</div>
+    {% endif %}
 
-    {% if stats.total > 0 %}
+    <h1>{% if route.is_project %}⭐ {% endif %}{{ route.name }}</h1>
+    <p class="muted">
+        {% if route.discipline == 'route' %}Route{% else %}Boulder{% endif %} · {{ route.grade }}
+        · {{ route.gym.name if route.gym else route.location }}
+    </p>
+
+    {% if climbs %}
     <div class="stats-card">
         <div class="stats-grid">
             <div class="stat">
-                <div class="stat-value">{{ sessions | length }}</div>
+                <div class="stat-value">{{ session_count }}</div>
                 <div class="stat-label">Sessions</div>
             </div>
             <div class="stat">
-                <div class="stat-value">{{ stats.total }}</div>
-                <div class="stat-label">Climbs</div>
+                <div class="stat-value">{{ total_attempts }}</div>
+                <div class="stat-label">Attempts</div>
             </div>
             <div class="stat">
-                <div class="stat-value">{{ stats.send_rate }}%</div>
-                <div class="stat-label">Send Rate</div>
+                <div class="stat-value">
+                    {% if best_result and best_result != 'attempt' %}
+                        {{ result_labels[best_result].split(' ')[0] }}
+                    {% else %}—{% endif %}
+                </div>
+                <div class="stat-label">Best</div>
             </div>
+            {% if days_worked is not none %}
             <div class="stat">
-                <div class="stat-value">{{ stats.hardest_boulder or '—' }}</div>
-                <div class="stat-label">Top Boulder</div>
+                <div class="stat-value">{{ days_worked }}</div>
+                <div class="stat-label">Day{% if days_worked != 1 %}s{% endif %} Worked</div>
             </div>
-            <div class="stat">
-                <div class="stat-value">{{ stats.hardest_route or '—' }}</div>
-                <div class="stat-label">Top Route</div>
-            </div>
+            {% endif %}
         </div>
     </div>
     {% endif %}
 
-    <p class="section-heading">Sessions ({{ sessions | length }})</p>
+    <div class="btn-row">
+        <a href="/route/{{ route.id }}/edit" class="btn btn-secondary">Edit Route</a>
+        <form method="POST" action="/route/{{ route.id }}/toggle_project" style="display:contents">
+            <button type="submit" class="btn btn-secondary">
+                {% if route.is_project %}Remove from projects{% else %}Mark as project{% endif %}
+            </button>
+        </form>
+    </div>
 
-    {% if sessions %}
-        {% for s in sessions %}
-        <div class="card">
-            <h3><a href="/session/{{ s.id }}">{{ s.date.strftime('%B %d, %Y') }}</a></h3>
-            <div class="mini-stats">
-                <span>{% if s.session_type == 'outdoor' %}⛰️ Outdoor{% else %}🏢 Indoor{% endif %}</span>
-                <span>·</span>
-                <span>{{ s.climbs | length }} climb{% if s.climbs | length != 1 %}s{% endif %}</span>
+    <hr>
+
+    <p class="section-heading">Timeline</p>
+
+    {% if climbs %}
+        {% for climb in climbs %}
+        <div class="card timeline-entry">
+            <p class="muted timeline-date">
+                {{ climb.session.date.strftime('%b %d, %Y') }} · {{ climb.session.gym.name if climb.session.gym else climb.session.location }}
+            </p>
+            <p class="timeline-result">{{ result_labels[climb.result] }}</p>
+            <p class="muted">{{ climb.attempts }} attempt{% if climb.attempts != 1 %}s{% endif %} this session</p>
+            {% if climb.notes %}
+            <p class="climb-notes">{{ climb.notes }}</p>
+            {% endif %}
+            <div class="card-actions">
+                <a href="/climb/{{ climb.id }}/edit" class="link-btn">Edit attempt</a>
+                <a href="/session/{{ climb.session_id }}" class="link-btn">View session</a>
             </div>
-            {% if s.notes %}<p class="muted">{{ s.notes }}</p>{% endif %}
         </div>
         {% endfor %}
     {% else %}
         <div class="empty-state">
-            <div class="empty-state-icon">📅</div>
-            <p>No sessions at this gym yet.</p>
+            <div class="empty-state-icon">📋</div>
+            <p>No attempts logged yet.</p>
         </div>
-    {% endif %}
-
-    {% if routes %}
-    <p class="section-heading">Routes ({{ routes | length }})</p>
-        {% for r in routes %}
-        <div class="card">
-            <h3><a href="/route/{{ r.id }}">{% if r.is_project %}⭐ {% endif %}{{ r.name }}</a></h3>
-            <div class="mini-stats">
-                <span>{% if r.discipline == 'route' %}🧗{% else %}🪨{% endif %} {{ r.grade }}</span>
-                <span>·</span>
-                <span>{{ r.climbs | length }} attempt{% if r.climbs | length != 1 %}s{% endif %}</span>
-            </div>
-        </div>
-        {% endfor %}
     {% endif %}
 
     <p style="margin-top: 16px;">
-        <a href="/gyms">← All Gyms</a>
+        <a href="/projects">← Projects</a>
         &nbsp;·&nbsp;
         <a href="/">Dashboard</a>
     </p>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ClimbTrack – Edit {{ gym.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <h1>Edit Gym</h1>
+
+    <form method="POST" enctype="multipart/form-data">
+
+        <div class="field">
+            <label>Gym Name</label>
+            <input type="text" name="name" value="{{ gym.name }}" required>
+        </div>
+
+        <div class="field">
+            <label>Address (optional)</label>
+            <input type="text" name="address" value="{{ gym.address or '' }}" placeholder="e.g. 123 Main St, Denver CO">
+        </div>
+
+        <div class="field">
+            <div class="field-inline">
+                <label><input type="checkbox" name="is_outdoor" {% if gym.is_outdoor %}checked{% endif %}> Outdoor crag</label>
+            </div>
+        </div>
+
+        <div class="field">
+            <label>Cover Photo</label>
+            {% if gym.image_filename %}
+            <img src="{{ url_for('static', filename='uploads/' + gym.image_filename) }}"
+                 alt="Current cover" class="cover-image" style="margin-bottom: 12px;">
+            {% endif %}
+            <input type="file" name="image" accept="image/*">
+            <p class="muted" style="margin-top: 6px;">JPG, PNG or WEBP. Max recommended: 5MB.</p>
+        </div>
+
+        <button type="submit">Save Changes</button>
+
+    </form>
+
+    <p style="margin-top: 16px;"><a href="/gym/{{ gym.id }}">← Cancel</a></p>
+
+</body>
+</html>

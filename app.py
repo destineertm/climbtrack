@@ -2,6 +2,9 @@ from flask import Flask, render_template, request, redirect, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from datetime import datetime
+import os
+import uuid
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
@@ -13,6 +16,28 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db, render_as_batch=True)
 
+# File upload config
+UPLOAD_FOLDER = os.path.join('static', 'uploads')
+ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'webp'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def save_upload(file):
+    """Save an uploaded file and return the filename. Returns None if no file."""
+    if not file or file.filename == '':
+        return None
+    if not allowed_file(file.filename):
+        return None
+    ext = file.filename.rsplit('.', 1)[1].lower()
+    filename = f"{uuid.uuid4().hex}.{ext}"
+    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+    return filename
+
 
 # --- Models ---
 
@@ -21,6 +46,7 @@ class Gym(db.Model):
     name = db.Column(db.String(100), nullable=False, unique=True)
     address = db.Column(db.String(200))
     is_outdoor = db.Column(db.Boolean, default=False)
+    image_filename = db.Column(db.String(200))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     sessions = db.relationship('Session', backref='gym', lazy=True)
@@ -31,8 +57,8 @@ class Session(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.DateTime, default=datetime.utcnow)
     gym_id = db.Column(db.Integer, db.ForeignKey('gym.id'), nullable=True)
-    location = db.Column(db.String(100))  # legacy, kept as fallback for now
-    session_type = db.Column(db.String(20), default='indoor')  # 'indoor' or 'outdoor'
+    location = db.Column(db.String(100))
+    session_type = db.Column(db.String(20), default='indoor')
     notes = db.Column(db.String(300))
     climbs = db.relationship('Climb', backref='session', lazy=True)
 
@@ -41,10 +67,11 @@ class Route(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     gym_id = db.Column(db.Integer, db.ForeignKey('gym.id'), nullable=True)
-    location = db.Column(db.String(100))  # legacy, kept as fallback for now
-    discipline = db.Column(db.String(20), default='boulder')  # 'boulder' or 'route'
+    location = db.Column(db.String(100))
+    discipline = db.Column(db.String(20), default='boulder')
     grade = db.Column(db.String(20))
     is_project = db.Column(db.Boolean, default=False)
+    image_filename = db.Column(db.String(200))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     climbs = db.relationship('Climb', backref='route', lazy=True)
 
@@ -193,6 +220,22 @@ def view_gym(gym_id):
     )
 
 
+@app.route("/gym/<int:gym_id>/edit", methods=["GET", "POST"])
+def edit_gym(gym_id):
+    gym = Gym.query.get_or_404(gym_id)
+    if request.method == "POST":
+        gym.name = request.form.get("name", gym.name).strip()
+        gym.address = request.form.get("address", "").strip() or None
+        gym.is_outdoor = bool(request.form.get("is_outdoor"))
+        file = request.files.get("image")
+        filename = save_upload(file)
+        if filename:
+            gym.image_filename = filename
+        db.session.commit()
+        return redirect(f"/gym/{gym_id}")
+    return render_template("edit_gym.html", gym=gym)
+
+
 # --- Home ---
 
 @app.route("/")
@@ -297,6 +340,23 @@ def toggle_project(route_id):
     route.is_project = not route.is_project
     db.session.commit()
     return redirect(f"/route/{route_id}")
+
+
+@app.route("/route/<int:route_id>/edit", methods=["GET", "POST"])
+def edit_route(route_id):
+    route = Route.query.get_or_404(route_id)
+    if request.method == "POST":
+        route.name = request.form.get("name", route.name).strip()
+        route.grade = request.form.get("grade", route.grade)
+        file = request.files.get("image")
+        filename = save_upload(file)
+        if filename:
+            route.image_filename = filename
+        db.session.commit()
+        return redirect(f"/route/{route_id}")
+    return render_template("edit_route.html", route=route,
+                           boulder_grades=V_GRADES_FULL,
+                           route_grades=YDS_GRADES_FULL)
 
 
 @app.route("/projects")

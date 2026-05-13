@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ClimbTrack – Edit {{ route.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <h1>Edit Route</h1>
+
+    <form method="POST" enctype="multipart/form-data">
+
+        <div class="field">
+            <label>Route Name</label>
+            <input type="text" name="name" value="{{ route.name }}" required>
+        </div>
+
+        <div class="field">
+            <label>Grade</label>
+            <select name="grade" id="grade-select">
+                {% if route.discipline == 'boulder' %}
+                    {% for g in boulder_grades %}
+                    <option value="{{ g }}" {% if g == route.grade %}selected{% endif %}>{{ g }}</option>
+                    {% endfor %}
+                {% else %}
+                    {% for g in route_grades %}
+                    <option value="{{ g }}" {% if g == route.grade %}selected{% endif %}>{{ g }}</option>
+                    {% endfor %}
+                {% endif %}
+            </select>
+        </div>
+
+        <div class="field">
+            <label>Cover Photo</label>
+            {% if route.image_filename %}
+            <img src="{{ url_for('static', filename='uploads/' + route.image_filename) }}"
+                 alt="Current cover" class="cover-image" style="margin-bottom: 12px;">
+            {% endif %}
+            <input type="file" name="image" accept="image/*">
+            <p class="muted" style="margin-top: 6px;">JPG, PNG or WEBP. Max recommended: 5MB.</p>
+        </div>
+
+        <button type="submit">Save Changes</button>
+
+    </form>
+
+    <p style="margin-top: 16px;"><a href="/route/{{ route.id }}">← Cancel</a></p>
+
+</body>
+</html>
