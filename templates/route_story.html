@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ClimbTrack – {{ route.name }} Story</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <nav class="top-nav"><a href="/route/{{ route.id }}">← Back to Route</a></nav>
+
+    <!-- Hero -->
+    <div class="story-hero">
+        {% if route.image_filename %}
+        <img src="{{ url_for('static', filename='uploads/' + route.image_filename) }}"
+             alt="{{ route.name }}" class="story-hero-image">
+        {% endif %}
+
+        <div class="story-hero-content">
+            <p class="story-gym">{{ route.gym.name if route.gym else route.location }}</p>
+            <h1 class="story-title">{{ route.name }}</h1>
+            <p class="story-grade">
+                {% if route.discipline == 'route' %}Route{% else %}Boulder{% endif %} · {{ route.grade }}
+            </p>
+
+            {% if is_sent %}
+            <div class="story-outcome story-outcome-sent">
+                {{ result_labels[best_result] }} — Project complete
+            </div>
+            {% else %}
+            <div class="story-outcome story-outcome-active">
+                In progress · {{ total_attempts }} attempts across {{ climbs | length }} session{% if climbs | length != 1 %}s{% endif %}
+            </div>
+            {% endif %}
+
+            <div class="story-meta">
+                {% if climbs %}
+                <span>Started {{ climbs[0].session.date.strftime('%b %d, %Y') }}</span>
+                {% if days_on_route %}
+                <span>·</span>
+                <span>{{ days_on_route }} day{% if days_on_route != 1 %}s{% endif %} on the route</span>
+                {% endif %}
+                <span>·</span>
+                <span>{{ total_attempts }} total attempt{% if total_attempts != 1 %}s{% endif %}</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline chapters -->
+    {% if climbs %}
+    <div class="story-timeline">
+        {% for climb in climbs %}
+        <div class="story-chapter {% if climb.result in ['send', 'flash', 'onsight'] %}story-chapter-sent{% endif %}">
+
+            <div class="story-chapter-header">
+                <div class="story-chapter-meta">
+                    <span class="story-chapter-date">{{ climb.session.date.strftime('%B %d, %Y') }}</span>
+                    <span class="story-chapter-gym">{{ climb.session.gym.name if climb.session.gym else climb.session.location }}</span>
+                </div>
+                <span class="story-chapter-result">{{ result_labels[climb.result] }}</span>
+            </div>
+
+            <p class="story-chapter-attempts">
+                {{ climb.attempts }} attempt{% if climb.attempts != 1 %}s{% endif %} this session
+            </p>
+
+            {% if climb.notes %}
+            <p class="story-chapter-notes">{{ climb.notes }}</p>
+            {% endif %}
+
+            {% if climb.photo_filename %}
+            <img src="{{ url_for('static', filename='uploads/' + climb.photo_filename) }}"
+                 alt="Attempt photo" class="story-photo">
+            {% endif %}
+
+            {% if climb.video_url %}
+            {% if 'youtube.com' in climb.video_url or 'youtu.be' in climb.video_url %}
+            {% set vid_id = climb.video_url.split('v=')[-1].split('&')[0] if 'v=' in climb.video_url else climb.video_url.split('/')[-1].split('?')[0] %}
+            <div class="video-embed story-video">
+                <iframe src="https://www.youtube.com/embed/{{ vid_id }}"
+                        frameborder="0" allowfullscreen></iframe>
+            </div>
+            {% elif 'vimeo.com' in climb.video_url %}
+            {% set vid_id = climb.video_url.split('/')[-1] %}
+            <div class="video-embed story-video">
+                <iframe src="https://player.vimeo.com/video/{{ vid_id }}"
+                        frameborder="0" allowfullscreen></iframe>
+            </div>
+            {% else %}
+            <a href="{{ climb.video_url }}" target="_blank" class="link-btn">Watch video</a>
+            {% endif %}
+            {% endif %}
+
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">📋</div>
+        <p>No attempts logged yet.</p>
+    </div>
+    {% endif %}
+
+</body>
+</html>

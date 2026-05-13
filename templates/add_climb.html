@@ -12,7 +12,7 @@
     <h1>Log a Climb</h1>
     <p class="muted">Session: {{ session.gym.name if session.gym else session.location }} ({{ session.session_type }})</p>
 
-    <form method="POST">
+    <form method="POST" enctype="multipart/form-data">
 
         <div class="field">
             <label>Climb Name</label>
@@ -67,8 +67,7 @@
                 {% for tag in style_tags %}
                 <label class="tag-option">
                     <input type="checkbox" name="style_tags" value="{{ tag }}">
-                    {{ tag }}
-                </label>
+                    {{ tag | capitalize }}                </label>
                 {% endfor %}
             </div>
         </div>
@@ -76,6 +75,18 @@
         <div class="field">
             <label>Notes (optional)</label>
             <textarea name="notes" rows="3" placeholder="Beta, how it felt, what to work on next time..."></textarea>
+        </div>
+
+        <div class="field">
+            <label>Photo (optional)</label>
+            <input type="file" name="photo" accept="image/*">
+            <p class="muted" style="margin-top: 4px;">Attach a photo of this attempt.</p>
+        </div>
+
+        <div class="field">
+            <label>Video Link (optional)</label>
+            <input type="text" name="video_url" placeholder="YouTube or Vimeo URL">
+            <p class="muted" style="margin-top: 4px;">Paste a YouTube or Vimeo link to embed the video on the route timeline.</p>
         </div>
 
         <button type="submit">Save Climb</button>

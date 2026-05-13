@@ -52,6 +52,7 @@
     {% endif %}
 
     <div class="btn-row">
+        <a href="/route/{{ route.id }}/story" class="btn">Story Mode</a>
         <a href="/route/{{ route.id }}/edit" class="btn btn-secondary">Edit Route</a>
         <form method="POST" action="/route/{{ route.id }}/toggle_project" style="display:contents">
             <button type="submit" class="btn btn-secondary">
@@ -74,6 +75,28 @@
             <p class="muted">{{ climb.attempts }} attempt{% if climb.attempts != 1 %}s{% endif %} this session</p>
             {% if climb.notes %}
             <p class="climb-notes">{{ climb.notes }}</p>
+            {% endif %}
+            {% if climb.photo_filename %}
+            <img src="{{ url_for('static', filename='uploads/' + climb.photo_filename) }}"
+                 alt="Attempt photo" class="attempt-photo">
+            {% endif %}
+            {% if climb.video_url %}
+            {% set embed = climb.video_url %}
+            {% if 'youtube.com' in embed or 'youtu.be' in embed %}
+            {% set vid_id = embed.split('v=')[-1].split('&')[0] if 'v=' in embed else embed.split('/')[-1].split('?')[0] %}
+            <div class="video-embed">
+                <iframe src="https://www.youtube.com/embed/{{ vid_id }}"
+                        frameborder="0" allowfullscreen></iframe>
+            </div>
+            {% elif 'vimeo.com' in embed %}
+            {% set vid_id = embed.split('/')[-1] %}
+            <div class="video-embed">
+                <iframe src="https://player.vimeo.com/video/{{ vid_id }}"
+                        frameborder="0" allowfullscreen></iframe>
+            </div>
+            {% else %}
+            <a href="{{ climb.video_url }}" target="_blank" class="link-btn">Watch video</a>
+            {% endif %}
             {% endif %}
             <div class="card-actions">
                 <a href="/climb/{{ climb.id }}/edit" class="link-btn">Edit attempt</a>

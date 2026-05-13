@@ -73,7 +73,7 @@
             {% if climb.get_style_tags() %}
             <div class="tag-list">
                 {% for tag in climb.get_style_tags() %}
-                <span class="tag">{{ tag }}</span>
+                <span class="tag">{{ tag | capitalize }}</span>
                 {% endfor %}
             </div>
             {% endif %}

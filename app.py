@@ -1,10 +1,12 @@
-from flask import Flask, render_template, request, redirect, jsonify
+from flask import Flask, render_template, request, redirect, jsonify, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from datetime import datetime
 import os
 import uuid
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 
@@ -15,6 +17,12 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # Initialize database + migrations
 db = SQLAlchemy(app)
 migrate = Migrate(app, db, render_as_batch=True)
+
+# Flask-Login
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-change-in-production')
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
+login_manager.login_message = 'Please log in to access ClimbTrack.'
 
 # File upload config
 UPLOAD_FOLDER = os.path.join('static', 'uploads')
@@ -39,7 +47,55 @@ def save_upload(file):
     return filename
 
 
+def get_embed_url(url):
+    """
+    Convert a raw YouTube or Vimeo URL to an embeddable iframe URL.
+    Returns None if the URL is not a supported video platform.
+    """
+    if not url:
+        return None
+    url = url.strip()
+
+    # YouTube — handle youtu.be, youtube.com/watch, youtube.com/shorts
+    import re
+    yt_patterns = [
+        r'(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/shorts/)([a-zA-Z0-9_-]{11})',
+    ]
+    for pat in yt_patterns:
+        m = re.search(pat, url)
+        if m:
+            return f"https://www.youtube.com/embed/{m.group(1)}"
+
+    # Vimeo
+    m = re.search(r'vimeo\.com/(\d+)', url)
+    if m:
+        return f"https://player.vimeo.com/video/{m.group(1)}"
+
+    # Not a recognized embeddable platform — store as plain link
+    return None
+
+
 # --- Models ---
+
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(150), unique=True, nullable=False)
+    display_name = db.Column(db.String(100), nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    sessions = db.relationship('Session', backref='user', lazy=True)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
 
 class Gym(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -57,6 +113,7 @@ class Session(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.DateTime, default=datetime.utcnow)
     gym_id = db.Column(db.Integer, db.ForeignKey('gym.id'), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     location = db.Column(db.String(100))
     session_type = db.Column(db.String(20), default='indoor')
     notes = db.Column(db.String(300))
@@ -172,6 +229,8 @@ class Climb(db.Model):
     result = db.Column(db.String(20), default='attempt')
     notes = db.Column(db.String(500))
     style_tags = db.Column(db.String(300))  # comma-separated e.g. "crimp,overhang"
+    photo_filename = db.Column(db.String(200))
+    video_url = db.Column(db.String(500))
 
     def get_style_tags(self):
         """Return style_tags as a list."""
@@ -197,6 +256,7 @@ def find_or_create_gym(name, is_outdoor=False):
 # --- Gyms ---
 
 @app.route("/gyms")
+@login_required
 def gyms_list():
     gyms = Gym.query.order_by(Gym.name).all()
     gym_data = []
@@ -217,6 +277,7 @@ def gyms_list():
 
 
 @app.route("/gym/<int:gym_id>")
+@login_required
 def view_gym(gym_id):
     gym = Gym.query.get_or_404(gym_id)
     sessions = sorted(gym.sessions, key=lambda s: s.date, reverse=True)
@@ -233,7 +294,7 @@ def view_gym(gym_id):
                     tag_stats[tag]['sends'] += 1
                 else:
                     tag_stats[tag]['attempts'] += 1
-    tag_stats = {k: v for k, v in tag_stats.items() if v['sends'] + v['attempts'] > 0}
+    tag_stats = {k.capitalize(): v for k, v in tag_stats.items() if v['sends'] + v['attempts'] > 0}
 
     return render_template(
         "gym_detail.html",
@@ -247,6 +308,7 @@ def view_gym(gym_id):
 
 
 @app.route("/gym/<int:gym_id>/edit", methods=["GET", "POST"])
+@login_required
 def edit_gym(gym_id):
     gym = Gym.query.get_or_404(gym_id)
     if request.method == "POST":
@@ -262,9 +324,69 @@ def edit_gym(gym_id):
     return render_template("edit_gym.html", gym=gym)
 
 
+# --- Auth ---
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if current_user.is_authenticated:
+        return redirect("/")
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        display_name = request.form.get("display_name", "").strip()
+        password = request.form.get("password", "")
+        confirm = request.form.get("confirm_password", "")
+
+        if not email or not display_name or not password:
+            flash("All fields are required.")
+            return render_template("register.html")
+        if password != confirm:
+            flash("Passwords do not match.")
+            return render_template("register.html")
+        if len(password) < 8:
+            flash("Password must be at least 8 characters.")
+            return render_template("register.html")
+        if User.query.filter_by(email=email).first():
+            flash("An account with that email already exists.")
+            return render_template("register.html")
+
+        user = User(email=email, display_name=display_name)
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+        login_user(user)
+        return redirect("/")
+
+    return render_template("register.html")
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if current_user.is_authenticated:
+        return redirect("/")
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+        user = User.query.filter_by(email=email).first()
+        if not user or not user.check_password(password):
+            flash("Invalid email or password.")
+            return render_template("login.html")
+        login_user(user)
+        next_page = request.args.get("next")
+        return redirect(next_page or "/")
+    return render_template("login.html")
+
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    return redirect("/login")
+
+
 # --- Home ---
 
 @app.route("/")
+@login_required
 def home():
     sessions = Session.query.order_by(Session.date.desc()).all()
 
@@ -333,6 +455,7 @@ def home():
 # --- Sessions ---
 
 @app.route("/session/new", methods=["GET", "POST"])
+@login_required
 def new_session():
     if request.method == "POST":
         gym_name = request.form.get("gym_name", "").strip()
@@ -346,6 +469,7 @@ def new_session():
         session = Session(
             location=gym.name if gym else gym_name,  # keep legacy field for fallback
             gym_id=gym.id if gym else None,
+            user_id=current_user.id,
             session_type=session_type,
             notes=notes,
         )
@@ -358,6 +482,7 @@ def new_session():
 
 
 @app.route("/session/<int:session_id>")
+@login_required
 def view_session(session_id):
     session = Session.query.get_or_404(session_id)
     stats = compute_stats(session.climbs)
@@ -370,6 +495,7 @@ def view_session(session_id):
 
 
 @app.route("/route/<int:route_id>")
+@login_required
 def view_route(route_id):
     route = Route.query.get_or_404(route_id)
 
@@ -406,7 +532,40 @@ def view_route(route_id):
     )
 
 
+@app.route("/route/<int:route_id>/story")
+@login_required
+def route_story(route_id):
+    route = Route.query.get_or_404(route_id)
+    climbs = sorted(
+        [c for c in route.climbs if c.session],
+        key=lambda c: c.session.date,
+        reverse=True
+    )
+    total_attempts = sum(c.attempts for c in climbs)
+    is_sent = any(c.result in SEND_RESULTS for c in climbs)
+    best_result = None
+    for priority in ['onsight', 'flash', 'send', 'attempt']:
+        if any(c.result == priority for c in climbs):
+            best_result = priority
+            break
+    days_on_route = None
+    if len(climbs) >= 2:
+        days_on_route = (climbs[-1].session.date - climbs[0].session.date).days
+
+    return render_template(
+        "route_story.html",
+        route=route,
+        climbs=climbs,
+        total_attempts=total_attempts,
+        is_sent=is_sent,
+        best_result=best_result,
+        days_on_route=days_on_route,
+        result_labels=RESULT_LABELS,
+    )
+
+
 @app.route("/route/<int:route_id>/toggle_project", methods=["POST"])
+@login_required
 def toggle_project(route_id):
     route = Route.query.get_or_404(route_id)
     route.is_project = not route.is_project
@@ -415,6 +574,7 @@ def toggle_project(route_id):
 
 
 @app.route("/route/<int:route_id>/edit", methods=["GET", "POST"])
+@login_required
 def edit_route(route_id):
     route = Route.query.get_or_404(route_id)
     if request.method == "POST":
@@ -432,6 +592,7 @@ def edit_route(route_id):
 
 
 @app.route("/projects")
+@login_required
 def projects():
     project_routes = Route.query.filter_by(is_project=True).order_by(Route.created_at.desc()).all()
 
@@ -507,6 +668,7 @@ def find_or_create_route(name, gym, discipline, grade, is_project=False):
 
 
 @app.route("/api/routes/search")
+@login_required
 def api_routes_search():
     """Return up to 8 routes matching a name fragment, optionally scoped by discipline."""
     q = (request.args.get("q") or "").strip().lower()
@@ -533,6 +695,7 @@ def api_routes_search():
 
 
 @app.route("/session/<int:session_id>/add", methods=["GET", "POST"])
+@login_required
 def add_climb(session_id):
     session = Session.query.get_or_404(session_id)
 
@@ -550,6 +713,8 @@ def add_climb(session_id):
         notes = request.form.get("notes", "").strip() or None
         selected_tags = request.form.getlist("style_tags")
         style_tags = ','.join(t for t in selected_tags if t in STYLE_TAGS) or None
+        photo_filename = save_upload(request.files.get("photo"))
+        video_url = request.form.get("video_url", "").strip() or None
 
         # Link to an existing route (if user clicked a suggestion) or find-or-create
         route_id_raw = request.form.get("route_id")
@@ -576,6 +741,8 @@ def add_climb(session_id):
             result=result,
             notes=notes,
             style_tags=style_tags,
+            photo_filename=photo_filename,
+            video_url=video_url,
         )
         db.session.add(new_climb)
         db.session.commit()
@@ -593,6 +760,7 @@ def add_climb(session_id):
 
 
 @app.route("/climb/<int:climb_id>/edit", methods=["GET", "POST"])
+@login_required
 def edit_climb(climb_id):
     climb = Climb.query.get_or_404(climb_id)
 
@@ -611,6 +779,13 @@ def edit_climb(climb_id):
         climb.notes = request.form.get("notes", "").strip() or None
         selected_tags = request.form.getlist("style_tags")
         climb.style_tags = ','.join(t for t in selected_tags if t in STYLE_TAGS) or None
+        photo = request.files.get("photo")
+        if photo and photo.filename:
+            filename = save_upload(photo)
+            if filename:
+                climb.photo_filename = filename
+        video_url = request.form.get("video_url", "").strip() or None
+        climb.video_url = video_url
 
         db.session.commit()
         return redirect(f"/session/{climb.session_id}")
@@ -627,6 +802,7 @@ def edit_climb(climb_id):
 
 
 @app.route("/training")
+@login_required
 def training_page():
     all_climbs = Climb.query.join(Session).order_by(Session.date).all()
     all_sessions = Session.query.order_by(Session.date).all()
@@ -803,6 +979,7 @@ def training_page():
 
 
 @app.route("/climb/<int:climb_id>/delete", methods=["POST"])
+@login_required
 def delete_climb(climb_id):
     climb = Climb.query.get_or_404(climb_id)
     session_id = climb.session_id
@@ -812,6 +989,7 @@ def delete_climb(climb_id):
 
 
 @app.route("/insights")
+@login_required
 def insights():
     all_climbs = Climb.query.join(Session).order_by(Session.date).all()
     all_sessions = Session.query.order_by(Session.date).all()
@@ -858,7 +1036,7 @@ def insights():
 
     # Only include tags that have been used — as ordered list for safe JS rendering
     tag_stats_list = [
-        {'tag': tag, 'sends': data['sends'], 'attempts': data['attempts']}
+        {'tag': tag.capitalize(), 'sends': data['sends'], 'attempts': data['attempts']}
         for tag, data in tag_stats.items()
         if data['sends'] + data['attempts'] > 0
     ]

@@ -63,7 +63,7 @@
         <p class="muted" style="margin-bottom: 8px;">Strengths</p>
         <div class="tag-list" style="margin-bottom: 16px;">
             {% for tag in training.strengths %}
-            <span class="tag tag-strength">{{ tag }}</span>
+            <span class="tag tag-strength">{{ tag | capitalize }}</span>
             {% endfor %}
         </div>
         {% endif %}
@@ -71,7 +71,7 @@
         <p class="muted" style="margin-bottom: 8px;">Weaknesses — focus here</p>
         <div class="tag-list">
             {% for tag in training.weaknesses %}
-            <span class="tag tag-weakness">{{ tag }}</span>
+            <span class="tag tag-weakness">{{ tag | capitalize }}</span>
             {% endfor %}
         </div>
         {% endif %}

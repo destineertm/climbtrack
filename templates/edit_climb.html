@@ -11,7 +11,7 @@
 
     <h1>Edit Climb</h1>
 
-    <form method="POST">
+    <form method="POST" enctype="multipart/form-data">
 
         <div class="field">
             <label>Climb Name</label>
@@ -52,8 +52,7 @@
                 <label class="tag-option">
                     <input type="checkbox" name="style_tags" value="{{ tag }}"
                         {% if tag in (climb.get_style_tags()) %}checked{% endif %}>
-                    {{ tag }}
-                </label>
+                    {{ tag | capitalize }}                </label>
                 {% endfor %}
             </div>
         </div>
@@ -61,6 +60,22 @@
         <div class="field">
             <label>Notes (optional)</label>
             <textarea name="notes" rows="3" placeholder="Beta, how it felt, what to work on next time...">{{ climb.notes or '' }}</textarea>
+        </div>
+
+        <div class="field">
+            <label>Photo (optional)</label>
+            {% if climb.photo_filename %}
+            <img src="{{ url_for('static', filename='uploads/' + climb.photo_filename) }}"
+                 alt="Attempt photo" style="width:100%;max-height:200px;object-fit:cover;border-radius:6px;margin-bottom:10px;">
+            {% endif %}
+            <input type="file" name="photo" accept="image/*">
+            <p class="muted" style="margin-top: 4px;">Upload a new photo to replace the existing one.</p>
+        </div>
+
+        <div class="field">
+            <label>Video Link (optional)</label>
+            <input type="text" name="video_url" value="{{ climb.video_url or '' }}" placeholder="YouTube or Vimeo URL">
+            <p class="muted" style="margin-top: 4px;">Paste a YouTube or Vimeo link to embed the video on the route timeline.</p>
         </div>
 
         <button type="submit">Save Changes</button>

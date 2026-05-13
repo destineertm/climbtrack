@@ -6,6 +6,11 @@
 </head>
 <body>
 
+    <div class="user-nav">
+        <span class="muted">Hey, {{ current_user.display_name }}</span>
+        <a href="/logout" class="link-btn">Log out</a>
+    </div>
+
     <h1>ClimbTrack</h1>
 
     {% if all_time.total > 0 %}
@@ -61,7 +66,7 @@
             </div>
             {% if trends.top_tag %}
             <div class="trend-item">
-                <span class="trend-value">{{ trends.top_tag }}</span>
+                <span class="trend-value">{{ trends.top_tag | capitalize }}</span>
                 <span class="trend-label">top style</span>
             </div>
             {% endif %}
