@@ -30,86 +30,82 @@
         </div>
     </header>
 
-
-    <h1>ClimbTrack</h1>
+    <h1>Good to see you, {{ current_user.display_name.split()[0] }} 👋</h1>
 
     {% if all_time.total > 0 %}
-    <div class="stats-card">
-        <h3>All Time</h3>
-        <div class="stats-grid">
-            <div class="stat">
-                <div class="stat-value">{{ all_time.total_sessions }}</div>
-                <div class="stat-label">Sessions</div>
-            </div>
-            <div class="stat">
-                <div class="stat-value">{{ all_time.total }}</div>
-                <div class="stat-label">Climbs</div>
-            </div>
-            <div class="stat">
-                <div class="stat-value">{{ all_time.sends }}</div>
-                <div class="stat-label">Sends</div>
-            </div>
-            <div class="stat">
-                <div class="stat-value">{{ all_time.hardest_boulder or '—' }}</div>
-                <div class="stat-label">Top Boulder</div>
-            </div>
-            <div class="stat">
-                <div class="stat-value">{{ all_time.hardest_route or '—' }}</div>
-                <div class="stat-label">Top Route</div>
+    <!-- Side by side stats on desktop, stacked on mobile -->
+    <div class="dashboard-grid">
+
+        <!-- All time stats -->
+        <div class="stats-card">
+            <h3>All Time</h3>
+            <div class="stats-grid stats-grid-3">
+                <div class="stat">
+                    <div class="stat-value">{{ all_time.total_sessions }}</div>
+                    <div class="stat-label">Sessions</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">{{ all_time.total }}</div>
+                    <div class="stat-label">Climbs</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">{{ all_time.sends }}</div>
+                    <div class="stat-label">Sends</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">{{ all_time.hardest_boulder or '—' }}</div>
+                    <div class="stat-label">Top Boulder</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">{{ all_time.hardest_route or '—' }}</div>
+                    <div class="stat-label">Top Route</div>
+                </div>
             </div>
         </div>
-    </div>
 
-    {% if trends.this_month_climbs > 0 or trends.streak > 1 %}
-    <div class="trends-card">
-        <p class="section-heading" style="margin-top: 0">This Month</p>
-        <div class="trends-grid">
-            <div class="trend-item">
-                <span class="trend-value">{{ trends.this_month_climbs }}</span>
-                <span class="trend-label">climbs</span>
-                {% if trends.last_month_climbs > 0 %}
-                <span class="trend-delta {% if trends.this_month_climbs >= trends.last_month_climbs %}trend-up{% else %}trend-down{% endif %}">
-                    {% if trends.this_month_climbs >= trends.last_month_climbs %}▲{% else %}▼{% endif %}
-                    vs {{ trends.last_month_climbs }} last month
-                </span>
-                {% endif %}
+        <!-- This month -->
+        {% if trends.this_month_climbs > 0 or trends.streak > 1 %}
+        <div class="stats-card">
+            <h3>This Month</h3>
+            <div class="stats-grid stats-grid-3">
+                <div class="stat">
+                    <div class="stat-value">{{ trends.this_month_climbs }}</div>
+                    <div class="stat-label">Climbs</div>
+                    {% if trends.last_month_climbs > 0 %}
+                    <div class="trend-delta {% if trends.this_month_climbs >= trends.last_month_climbs %}trend-up{% else %}trend-down{% endif %}">
+                        {% if trends.this_month_climbs >= trends.last_month_climbs %}▲{% else %}▼{% endif %}
+                        vs {{ trends.last_month_climbs }}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="stat">
+                    <div class="stat-value">{{ trends.this_month_sends }}</div>
+                    <div class="stat-label">Sends</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">{{ trends.this_month_send_rate }}%</div>
+                    <div class="stat-label">Send Rate</div>
+                    {% if trends.rate_diff is not none %}
+                    <div class="trend-delta {% if trends.rate_diff >= 0 %}trend-up{% else %}trend-down{% endif %}">
+                        {% if trends.rate_diff >= 0 %}▲{% else %}▼{% endif %}
+                        {{ trends.rate_diff | abs }}% vs last
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="stat">
+                    {% if trends.streak > 1 %}
+                    <div class="stat-value">{{ trends.streak }}</div>
+                    <div class="stat-label">Day Streak 🔥</div>
+                    {% endif %}
+                </div>
+                <div class="stat"></div>
+                <div class="stat"></div>
             </div>
-            <div class="trend-item">
-                <span class="trend-value">{{ trends.this_month_sends }}</span>
-                <span class="trend-label">sends</span>
-                {% if trends.rate_diff is not none %}
-                <span class="trend-delta {% if trends.rate_diff >= 0 %}trend-up{% else %}trend-down{% endif %}">
-                    {% if trends.rate_diff >= 0 %}▲{% else %}▼{% endif %}
-                    {{ trends.rate_diff | abs }}% send rate
-                </span>
-                {% endif %}
-            </div>
-            {% if trends.top_tag %}
-            <div class="trend-item">
-                <span class="trend-value">{{ trends.top_tag | capitalize }}</span>
-                <span class="trend-label">top style</span>
-            </div>
-            {% endif %}
-            {% if trends.streak > 1 %}
-            <div class="trend-item">
-                <span class="trend-value">{{ trends.streak }}</span>
-                <span class="trend-label">day streak 🔥</span>
-            </div>
-            {% endif %}
         </div>
+        {% endif %}
+
     </div>
     {% endif %}
-    {% endif %}
-
-    <div class="btn-row">
-        <a href="/session/new" class="btn">+ Start New Session</a>
-        <a href="/projects" class="btn btn-secondary">⭐ Projects</a>
-        <a href="/gyms" class="btn btn-secondary">🏢 Gyms</a>
-        <a href="/insights" class="btn btn-secondary">📈 Insights</a>
-        <a href="/training" class="btn btn-secondary">🧠 Training</a>
-    </div>
-
-    <hr>
 
     {% if cotm %}
     <div class="cotm-card">
@@ -127,7 +123,12 @@
     </div>
     {% endif %}
 
-    <h2 class="section-heading">Recent Sessions</h2>
+    <div class="section-header">
+        <p class="section-heading" style="margin: 0">Recent Sessions</p>
+        {% if total_sessions_count > 5 %}
+        <a href="/gyms" class="view-all-link">View all {{ total_sessions_count }}</a>
+        {% endif %}
+    </div>
 
     {% if sessions %}
         <div class="card-grid">
@@ -139,7 +140,6 @@
                 {{ session.date.strftime('%B %d, %Y') }} ·
                 {% if session.session_type == 'outdoor' %}⛰️ Outdoor{% else %}🏢 Indoor{% endif %}
             </p>
-
             <div class="mini-stats">
                 <span>{{ stats.total }} climb{% if stats.total != 1 %}s{% endif %}</span>
                 <span>·</span>
@@ -153,9 +153,8 @@
                 <span>🧗 {{ stats.hardest_route }}</span>
                 {% endif %}
             </div>
-
             {% if session.notes %}
-                <p class="muted">{{ session.notes }}</p>
+            <p class="muted">{{ session.notes }}</p>
             {% endif %}
         </div>
         {% endfor %}
@@ -163,10 +162,9 @@
     {% else %}
         <div class="empty-state">
             <div class="empty-state-icon">🧗</div>
-            <p>No sessions yet. Start one above to begin tracking!</p>
+            <p>No sessions yet — hit the + button to start tracking!</p>
         </div>
     {% endif %}
-
 
     <!-- Bottom nav (mobile) -->
     <nav class="bottom-nav">
@@ -174,7 +172,7 @@
             <span class="bottom-nav-icon">🏠</span>
             <span>Home</span>
         </a>
-        <a href="/gyms" class="bottom-nav-item ">
+        <a href="/gyms" class="bottom-nav-item">
             <span class="bottom-nav-icon">📋</span>
             <span>Sessions</span>
         </a>
@@ -182,14 +180,15 @@
             <div class="bottom-nav-center-btn">+</div>
             <span class="bottom-nav-center-label">Log</span>
         </a>
-        <a href="/insights" class="bottom-nav-item ">
+        <a href="/insights" class="bottom-nav-item">
             <span class="bottom-nav-icon">📈</span>
             <span>Insights</span>
         </a>
-        <a href="/training" class="bottom-nav-item ">
+        <a href="/training" class="bottom-nav-item">
             <span class="bottom-nav-icon">🧠</span>
             <span>Training</span>
         </a>
     </nav>
+
 </body>
 </html>

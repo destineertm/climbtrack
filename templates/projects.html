@@ -41,8 +41,11 @@
         {% set sent = project_data | selectattr('is_sent', 'equalto', true) | list %}
 
         {% if active %}
-        <p class="section-heading">🔥 Active ({{ active | length }})</p>
-        {% for p in active %}
+        <div class="section-header">
+            <p class="section-heading" style="margin: 0">🔥 Active ({{ active | length }})</p>
+        </div>
+        <div class="card-grid">
+        {% for p in active[:6] %}
         <div class="card">
             <h3><a href="/route/{{ p.route.id }}">{{ p.route.name }}</a></h3>
             <p class="muted">
@@ -68,11 +71,18 @@
             {% endif %}
         </div>
         {% endfor %}
+        </div>
+        {% if active | length > 6 %}
+        <p style="margin-top: 8px;"><a href="/projects" class="view-all-link">+ {{ active | length - 6 }} more active projects</a></p>
+        {% endif %}
         {% endif %}
 
         {% if sent %}
-        <p class="section-heading">🏆 Sent ({{ sent | length }})</p>
-        {% for p in sent %}
+        <div class="section-header" style="margin-top: 16px;">
+            <p class="section-heading" style="margin: 0">🏆 Sent ({{ sent | length }})</p>
+        </div>
+        <div class="card-grid">
+        {% for p in sent[:6] %}
         <div class="card project-card sent">
             <h3><a href="/route/{{ p.route.id }}">{{ p.route.name }}</a></h3>
             <p class="muted">
@@ -88,6 +98,10 @@
             </div>
         </div>
         {% endfor %}
+        </div>
+        {% if sent | length > 6 %}
+        <p style="margin-top: 8px;"><a href="/projects" class="view-all-link">+ {{ sent | length - 6 }} more sent projects</a></p>
+        {% endif %}
         {% endif %}
 
     {% else %}

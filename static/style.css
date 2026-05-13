@@ -356,7 +356,8 @@ button[type="submit"]:hover {
     box-shadow: var(--shadow-sm);
 }
 
-.stats-card h3 {
+.stats-card h3,
+.trends-card h3 {
     margin: 0 0 16px 0;
     color: var(--text-muted);
     font-size: 0.75rem;
@@ -369,6 +370,10 @@ button[type="submit"]:hover {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
     gap: 16px;
+}
+
+.stats-grid-3 {
+    grid-template-columns: repeat(3, 1fr);
 }
 
 .stat { text-align: center; }
@@ -467,39 +472,138 @@ button[type="submit"]:hover {
 }
 
 .trends-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+@media (min-width: 769px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .dashboard-grid .stats-card,
+    .dashboard-grid .trends-card {
+        margin-bottom: 0;
+    }
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    margin-top: 8px;
+}
+
+.view-all-link {
+    font-size: 0.825rem;
+    color: var(--accent);
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.view-all-link:hover {
+    text-decoration: underline;
+}
+
+.trends-grid {
     display: flex;
     gap: 24px;
     flex-wrap: wrap;
 }
 
 .trend-item {
+    text-align: center;
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 2px;
 }
 
 .trend-value {
-    font-size: 1.3rem;
+    font-size: 1.6rem;
     font-weight: 700;
     color: var(--text);
     letter-spacing: -0.02em;
+    line-height: 1.2;
 }
 
 .trend-label {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.06em;
+    font-weight: 500;
 }
 
 .trend-delta {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 500;
     margin-top: 2px;
+    text-align: center;
 }
 
 .trend-up { color: var(--success); }
 .trend-down { color: var(--danger); }
+
+/* ---- Gym grid ---- */
+
+.gym-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+}
+
+@media (min-width: 600px) {
+    .gym-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.gym-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    text-decoration: none;
+    color: var(--text);
+    display: block;
+    transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.gym-card:hover {
+    box-shadow: var(--shadow);
+    transform: translateY(-2px);
+    text-decoration: none;
+    color: var(--text);
+}
+
+.gym-card-image {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    display: block;
+}
+
+.gym-card-body {
+    padding: 16px;
+}
+
+.gym-card-body h3 {
+    margin: 0 0 4px 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+}
 
 /* ---- Climb of the Month ---- */
 
@@ -858,6 +962,30 @@ button[type="submit"]:hover {
     flex-direction: column;
     gap: 8px;
     margin-bottom: 24px;
+}
+
+.training-overview-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 8px;
+}
+
+.weekly-plan-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+@media (min-width: 769px) {
+    .training-overview-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .weekly-plan-grid {
+        grid-template-columns: 1fr 1fr;
+    }
 }
 
 .week-day {
@@ -1250,6 +1378,13 @@ button[type="submit"]:hover {
     }
 }
 
+.chart-pair {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 8px;
+}
+
 /* ---- Bottom nav (mobile) ---- */
 
 .bottom-nav {
@@ -1419,19 +1554,24 @@ button[type="submit"]:hover {
     }
 
     /* Wider stats grid */
-    .stats-grid {
+    .stats-grid:not(.stats-grid-3) {
         grid-template-columns: repeat(5, 1fr);
     }
 
-    /* Side-by-side trends */
-    .trends-grid {
-        gap: 32px;
-    }
+    /* Side-by-side trends handled by grid above */
 
     /* Chart side by side */
     .chart-pair {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 16px;
+    }
+
+    .chart-pair canvas {
+        height: 220px !important;
+    }
+
+    .chart-card:not(.chart-pair .chart-card) canvas {
+        height: 260px !important;
     }
 }

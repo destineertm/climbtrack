@@ -53,59 +53,66 @@
         <p class="muted" style="margin-top: 8px;">{{ training.fatigue_msg }}</p>
     </div>
 
-    <!-- Progression status -->
-    <p class="section-heading">Progression Status</p>
-    <div class="card">
-        <div class="progression-grid">
-            <div class="progression-item">
-                <span class="progression-label">Boulder</span>
-                {% if training.boulder_progressing %}
-                <span class="progression-status status-up">At or near your peak — {{ training.recent_boulder }}</span>
-                {% elif training.boulder_plateau %}
-                <span class="progression-status status-flat">Below peak recently — peak: {{ training.peak_boulder }}, recent: {{ training.recent_boulder }}</span>
-                {% else %}
-                <span class="progression-status status-neutral">Not enough send data</span>
-                {% endif %}
-            </div>
-            <div class="progression-item">
-                <span class="progression-label">Route</span>
-                {% if training.route_progressing %}
-                <span class="progression-status status-up">At or near your peak — {{ training.recent_route }}</span>
-                {% elif training.route_plateau %}
-                <span class="progression-status status-flat">Below peak recently — peak: {{ training.peak_route }}, recent: {{ training.recent_route }}</span>
-                {% else %}
-                <span class="progression-status status-neutral">Not enough send data</span>
-                {% endif %}
-            </div>
-        </div>
-    </div>
+    <!-- Progression + Style side by side -->
+    <div class="training-overview-grid">
 
-    <!-- Style analysis -->
-    {% if training.weaknesses or training.strengths %}
-    <p class="section-heading">Style Analysis</p>
-    <div class="card">
-        {% if training.strengths %}
-        <p class="muted" style="margin-bottom: 8px;">Strengths</p>
-        <div class="tag-list" style="margin-bottom: 16px;">
-            {% for tag in training.strengths %}
-            <span class="tag tag-strength">{{ tag | capitalize }}</span>
-            {% endfor %}
+        <div>
+            <p class="section-heading">Progression Status</p>
+            <div class="card">
+                <div class="progression-grid">
+                    <div class="progression-item">
+                        <span class="progression-label">Boulder</span>
+                        {% if training.boulder_progressing %}
+                        <span class="progression-status status-up">At or near peak — {{ training.recent_boulder }}</span>
+                        {% elif training.boulder_plateau %}
+                        <span class="progression-status status-flat">Below peak — {{ training.peak_boulder }} → {{ training.recent_boulder }}</span>
+                        {% else %}
+                        <span class="progression-status status-neutral">Not enough data</span>
+                        {% endif %}
+                    </div>
+                    <div class="progression-item">
+                        <span class="progression-label">Route</span>
+                        {% if training.route_progressing %}
+                        <span class="progression-status status-up">At or near peak — {{ training.recent_route }}</span>
+                        {% elif training.route_plateau %}
+                        <span class="progression-status status-flat">Below peak — {{ training.peak_route }} → {{ training.recent_route }}</span>
+                        {% else %}
+                        <span class="progression-status status-neutral">Not enough data</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if training.weaknesses or training.strengths %}
+        <div>
+            <p class="section-heading">Style Analysis</p>
+            <div class="card">
+                {% if training.strengths %}
+                <p class="muted" style="margin-bottom: 6px;">Strengths</p>
+                <div class="tag-list" style="margin-bottom: 12px;">
+                    {% for tag in training.strengths %}
+                    <span class="tag tag-strength">{{ tag | capitalize }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% if training.weaknesses %}
+                <p class="muted" style="margin-bottom: 6px;">Weaknesses</p>
+                <div class="tag-list">
+                    {% for tag in training.weaknesses %}
+                    <span class="tag tag-weakness">{{ tag | capitalize }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
         </div>
         {% endif %}
-        {% if training.weaknesses %}
-        <p class="muted" style="margin-bottom: 8px;">Weaknesses — focus here</p>
-        <div class="tag-list">
-            {% for tag in training.weaknesses %}
-            <span class="tag tag-weakness">{{ tag | capitalize }}</span>
-            {% endfor %}
-        </div>
-        {% endif %}
+
     </div>
-    {% endif %}
 
     <!-- Weekly plan -->
     <p class="section-heading">Suggested Week</p>
-    <div class="weekly-plan">
+    <div class="weekly-plan-grid">
         {% for day in training.weekly_plan %}
         <div class="week-day week-day-{{ day.type | lower | replace(' ', '-') | replace('/', '-') }}">
             <div class="week-day-header">

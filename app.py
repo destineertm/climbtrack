@@ -281,6 +281,8 @@ def gyms_list():
 def view_gym(gym_id):
     gym = Gym.query.get_or_404(gym_id)
     sessions = sorted(gym.sessions, key=lambda s: s.date, reverse=True)
+    total_session_count = len(sessions)
+    sessions = sessions[:6]
     routes = list(gym.routes)
     all_climbs = [c for s in sessions for c in s.climbs]
     stats = compute_stats(all_climbs)
@@ -304,6 +306,7 @@ def view_gym(gym_id):
         stats=stats,
         tag_stats=tag_stats,
         result_labels=RESULT_LABELS,
+        total_session_count=total_session_count,
     )
 
 
@@ -388,7 +391,8 @@ def logout():
 @app.route("/")
 @login_required
 def home():
-    sessions = Session.query.order_by(Session.date.desc()).all()
+    sessions = Session.query.order_by(Session.date.desc()).limit(5).all()
+    total_sessions_count = Session.query.count()
 
     # Per-session stats
     session_stats = {s.id: compute_stats(s.climbs) for s in sessions}
@@ -467,6 +471,7 @@ def home():
         trends=trends,
         cotm=cotm,
         result_labels=RESULT_LABELS,
+        total_sessions_count=total_sessions_count,
     )
 
 
@@ -517,10 +522,11 @@ def view_session(session_id):
 def view_route(route_id):
     route = Route.query.get_or_404(route_id)
 
-    # Sort climbs oldest-first for the timeline
+    # Sort climbs newest-first for the timeline
     climbs = sorted(
         [c for c in route.climbs if c.session],
-        key=lambda c: c.session.date
+        key=lambda c: c.session.date,
+        reverse=True
     )
 
     total_attempts = sum(c.attempts for c in climbs)

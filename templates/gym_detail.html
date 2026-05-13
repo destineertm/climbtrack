@@ -52,7 +52,7 @@
     <div class="stats-card">
         <div class="stats-grid">
             <div class="stat">
-                <div class="stat-value">{{ sessions | length }}</div>
+                <div class="stat-value">{{ total_session_count }}</div>
                 <div class="stat-label">Sessions</div>
             </div>
             <div class="stat">
@@ -86,9 +86,15 @@
     </div>
     {% endif %}
 
-    <p class="section-heading">Sessions ({{ sessions | length }})</p>
+    <div class="section-header">
+        <p class="section-heading" style="margin: 0">Sessions ({{ total_session_count }})</p>
+        {% if total_session_count > 6 %}
+        <a href="/gyms" class="view-all-link">View all {{ total_session_count }}</a>
+        {% endif %}
+    </div>
 
     {% if sessions %}
+        <div class="card-grid">
         {% for s in sessions %}
         <div class="card">
             <h3><a href="/session/{{ s.id }}">{{ s.date.strftime('%B %d, %Y') }}</a></h3>
@@ -100,6 +106,7 @@
             {% if s.notes %}<p class="muted">{{ s.notes }}</p>{% endif %}
         </div>
         {% endfor %}
+        </div>
     {% else %}
         <div class="empty-state">
             <div class="empty-state-icon">📅</div>
@@ -108,8 +115,16 @@
     {% endif %}
 
     {% if routes %}
-    <p class="section-heading">Routes ({{ routes | length }})</p>
-        {% for r in routes %}
+    {% set total_route_count = routes | length %}
+    {% set displayed_routes = routes[:6] %}
+    <div class="section-header">
+        <p class="section-heading" style="margin: 0">Routes ({{ total_route_count }})</p>
+        {% if total_route_count > 6 %}
+        <a href="/gym/{{ gym.id }}" class="view-all-link">View all {{ total_route_count }}</a>
+        {% endif %}
+    </div>
+    <div class="card-grid">
+        {% for r in displayed_routes %}
         <div class="card">
             <h3><a href="/route/{{ r.id }}">{% if r.is_project %}⭐ {% endif %}{{ r.name }}</a></h3>
             <div class="mini-stats">
@@ -119,6 +134,7 @@
             </div>
         </div>
         {% endfor %}
+    </div>
     {% endif %}
 
     

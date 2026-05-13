@@ -91,6 +91,7 @@
     <p class="section-heading">Timeline</p>
 
     {% if climbs %}
+        <div class="card-grid">
         {% for climb in climbs %}
         <div class="card timeline-entry">
             <p class="muted timeline-date">
@@ -129,6 +130,7 @@
             </div>
         </div>
         {% endfor %}
+        </div>
     {% else %}
         <div class="empty-state">
             <div class="empty-state-icon">📋</div>

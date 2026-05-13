@@ -68,20 +68,20 @@
     <!-- Grade Progression -->
     {% if boulder_progression or route_progression %}
     <p class="section-heading">Grade Progression</p>
-
+    <div class="chart-pair">
     {% if boulder_progression %}
     <div class="card chart-card">
         <h3>Boulder</h3>
-        <canvas id="boulder-progression-chart" height="120"></canvas>
+        <canvas id="boulder-progression-chart" height="220"></canvas>
     </div>
     {% endif %}
-
     {% if route_progression %}
     <div class="card chart-card">
         <h3>Route</h3>
-        <canvas id="route-progression-chart" height="120"></canvas>
+        <canvas id="route-progression-chart" height="220"></canvas>
     </div>
     {% endif %}
+    </div>
     {% else %}
     <div class="empty-state">
         <div class="empty-state-icon">📈</div>
@@ -92,28 +92,31 @@
     <!-- Send Rate by Grade -->
     {% if boulder_send_rates or route_send_rates %}
     <p class="section-heading">Send Rate by Grade</p>
-
+    <div class="chart-pair">
     {% if boulder_send_rates %}
     <div class="card chart-card">
         <h3>Boulder</h3>
-        <canvas id="boulder-sendrate-chart" height="120"></canvas>
+        <canvas id="boulder-sendrate-chart" height="220"></canvas>
     </div>
     {% endif %}
-
     {% if route_send_rates %}
     <div class="card chart-card">
         <h3>Route</h3>
-        <canvas id="route-sendrate-chart" height="120"></canvas>
+        <canvas id="route-sendrate-chart" height="220"></canvas>
     </div>
     {% endif %}
+    </div>
     {% endif %}
 
     <!-- Style Breakdown -->
     {% if tag_stats %}
     <p class="section-heading">Style Breakdown</p>
+    <div class="chart-pair">
     <div class="card chart-card">
         <h3>Sends vs Attempts by Style</h3>
-        <canvas id="style-chart" height="160"></canvas>
+        <canvas id="style-chart" height="220"></canvas>
+    </div>
+    <div></div>
     </div>
     {% else %}
     <div class="empty-state">
@@ -125,6 +128,7 @@
     <!-- Most Worked Routes -->
     {% if top_projects %}
     <p class="section-heading">Most Worked Routes</p>
+    <div class="card-grid">
     {% for route in top_projects %}
     <div class="card">
         <h3><a href="/route/{{ route.id }}">{{ route.name }}</a></h3>
@@ -141,6 +145,7 @@
         </div>
     </div>
     {% endfor %}
+    </div>
     {% endif %}
 
     
