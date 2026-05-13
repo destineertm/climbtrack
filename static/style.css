@@ -161,6 +161,10 @@ hr {
     font-size: 0.8rem;
     font-weight: 500;
     text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+    vertical-align: middle;
 }
 
 .link-btn:hover { text-decoration: underline; }
@@ -301,13 +305,41 @@ button[type="submit"]:hover {
     border-top: 1px solid var(--border);
 }
 
-.card-actions form {
-    background: none;
-    border: none;
-    box-shadow: none;
-    padding: 0;
-    margin: 0;
-    display: inline;
+.card-actions form,
+.card-action-form {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center;
+}
+
+.card-action-btn {
+    background: var(--surface-2) !important;
+    border: 1px solid var(--border) !important;
+    box-shadow: var(--shadow-sm) !important;
+    padding: 5px 12px !important;
+    margin: 0 !important;
+    width: auto !important;
+    font-size: 0.8rem !important;
+    font-weight: 500 !important;
+    color: var(--accent) !important;
+    cursor: pointer;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    border-radius: var(--radius-sm);
+}
+
+.card-action-btn:hover {
+    background: var(--surface-3) !important;
+    text-decoration: none;
+}
+
+.card-action-btn-danger {
+    color: var(--danger) !important;
 }
 
 /* ---- Stats cards ---- */

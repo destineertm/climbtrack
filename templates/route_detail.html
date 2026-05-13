@@ -6,9 +6,16 @@
 </head>
 <body>
 
+    {% if route.image_filename %}
+    <img src="{{ url_for('static', filename='uploads/' + route.image_filename) }}"
+         alt="{{ route.name }}" class="cover-image">
+    {% else %}
+    <div class="cover-placeholder">No cover photo — add one by editing this route</div>
+    {% endif %}
+
     <h1>{% if route.is_project %}⭐ {% endif %}{{ route.name }}</h1>
     <p class="muted">
-        {% if route.discipline == 'route' %}🧗{% else %}🪨{% endif %} {{ route.grade }}
+        {% if route.discipline == 'route' %}Route{% else %}Boulder{% endif %} · {{ route.grade }}
         · {{ route.gym.name if route.gym else route.location }}
     </p>
 
@@ -42,9 +49,10 @@
     {% endif %}
 
     <div class="btn-row">
-        <form method="POST" action="/route/{{ route.id }}/toggle_project" style="display:inline">
+        <a href="/route/{{ route.id }}/edit" class="btn btn-secondary">Edit Route</a>
+        <form method="POST" action="/route/{{ route.id }}/toggle_project" style="display:contents">
             <button type="submit" class="btn btn-secondary">
-                {% if route.is_project %}Remove from projects{% else %}⭐ Mark as project{% endif %}
+                {% if route.is_project %}Remove from projects{% else %}Mark as project{% endif %}
             </button>
         </form>
     </div>
@@ -62,11 +70,11 @@
             <p class="timeline-result">{{ result_labels[climb.result] }}</p>
             <p class="muted">{{ climb.attempts }} attempt{% if climb.attempts != 1 %}s{% endif %} this session</p>
             {% if climb.notes %}
-            <p class="climb-notes">📝 {{ climb.notes }}</p>
+            <p class="climb-notes">{{ climb.notes }}</p>
             {% endif %}
             <div class="card-actions">
-                <a href="/climb/{{ climb.id }}/edit" class="link-btn">Edit</a>
-                <a href="/session/{{ climb.session_id }}" class="link-btn">View Session</a>
+                <a href="/climb/{{ climb.id }}/edit" class="link-btn">Edit attempt</a>
+                <a href="/session/{{ climb.session_id }}" class="link-btn">View session</a>
             </div>
         </div>
         {% endfor %}

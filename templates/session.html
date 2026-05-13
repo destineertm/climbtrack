@@ -68,10 +68,8 @@
             <p class="climb-notes">📝 {{ climb.notes }}</p>
             {% endif %}
             <div class="card-actions">
-                <a href="/climb/{{ climb.id }}/edit" class="link-btn">Edit</a>
-                <form method="POST" action="/climb/{{ climb.id }}/delete" style="display:inline" onsubmit="return confirm('Delete this climb?');">
-                    <button type="submit" class="link-btn link-btn-danger">Delete</button>
-                </form>
+                <button class="card-action-btn" onclick="window.location='/climb/{{ climb.id }}/edit'">Edit</button>
+                <button class="card-action-btn card-action-btn-danger" onclick="if(confirm('Delete this climb?')) { fetch('/climb/{{ climb.id }}/delete', {method:'POST'}).then(() => window.location.reload()) }">Delete</button>
             </div>
         </div>
         {% endfor %}
