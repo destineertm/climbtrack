@@ -6,6 +6,31 @@
 </head>
 <body>
 
+    <!-- Desktop top nav -->
+    <header class="desktop-nav">
+        <a href="/" class="desktop-nav-logo">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="32" height="32" rx="8" fill="#4f6ef7"/>
+                <path d="M8 24 L14 12 L20 18 L24 10" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <circle cx="24" cy="10" r="2.5" fill="white"/>
+            </svg>
+            <span class="desktop-nav-wordmark">ClimbTrack</span>
+        </a>
+        <nav class="desktop-nav-links">
+            <a href="/" class="desktop-nav-link">Home</a>
+            <a href="/gyms" class="desktop-nav-link">Sessions</a>
+            <a href="/projects" class="desktop-nav-link active">Projects</a>
+            <a href="/insights" class="desktop-nav-link">Insights</a>
+            <a href="/training" class="desktop-nav-link">Training</a>
+        </nav>
+        <div class="desktop-nav-user">
+            <a href="/session/new" class="desktop-nav-cta">+ Log Climb</a>
+            <span class="desktop-nav-name">{{ current_user.display_name }}</span>
+            <a href="/logout" class="desktop-nav-logout">Log out</a>
+        </div>
+    </header>
+
+
     <nav class="top-nav"><a href="/">← Dashboard</a></nav>
 
 
@@ -74,5 +99,29 @@
 
     
 
+
+    <!-- Bottom nav (mobile) -->
+    <nav class="bottom-nav">
+        <a href="/" class="bottom-nav-item ">
+            <span class="bottom-nav-icon">🏠</span>
+            <span>Home</span>
+        </a>
+        <a href="/gyms" class="bottom-nav-item ">
+            <span class="bottom-nav-icon">📋</span>
+            <span>Sessions</span>
+        </a>
+        <a href="/session/new" class="bottom-nav-center">
+            <div class="bottom-nav-center-btn">+</div>
+            <span class="bottom-nav-center-label">Log</span>
+        </a>
+        <a href="/insights" class="bottom-nav-item ">
+            <span class="bottom-nav-icon">📈</span>
+            <span>Insights</span>
+        </a>
+        <a href="/training" class="bottom-nav-item ">
+            <span class="bottom-nav-icon">🧠</span>
+            <span>Training</span>
+        </a>
+    </nav>
 </body>
 </html>

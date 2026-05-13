@@ -501,6 +501,49 @@ button[type="submit"]:hover {
 .trend-up { color: var(--success); }
 .trend-down { color: var(--danger); }
 
+/* ---- Climb of the Month ---- */
+
+.cotm-card {
+    background: linear-gradient(135deg, #4f6ef7 0%, #7c3aed 100%);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 16px rgba(79,110,247,0.3);
+}
+
+.cotm-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.75);
+    margin: 0 0 6px 0;
+}
+
+.cotm-name {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 6px 0;
+    letter-spacing: -0.02em;
+}
+
+.cotm-name a {
+    color: #fff;
+    text-decoration: none;
+}
+
+.cotm-name a:hover {
+    text-decoration: underline;
+    color: #fff;
+}
+
+.cotm-detail {
+    font-size: 0.875rem;
+    color: rgba(255,255,255,0.8);
+    margin: 0;
+}
+
 /* ---- Auth pages ---- */
 
 .auth-container {
@@ -1077,11 +1120,318 @@ button[type="submit"]:hover {
 
 /* ---- Mobile ---- */
 
-@media (max-width: 480px) {
-    body { padding: 20px 12px; }
+/* ---- Desktop top nav ---- */
+
+.desktop-nav {
+    display: none;
+}
+
+@media (min-width: 769px) {
+    .desktop-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        padding: 0 32px;
+        z-index: 100;
+        box-shadow: var(--shadow-sm);
+    }
+
+    body {
+        padding-top: 84px; /* 60px nav + 24px original top padding */
+    }
+
+    .desktop-nav-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+        color: var(--text);
+        flex-shrink: 0;
+    }
+
+    .desktop-nav-logo:hover {
+        text-decoration: none;
+        opacity: 0.85;
+    }
+
+    .desktop-nav-wordmark {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text);
+        letter-spacing: -0.02em;
+    }
+
+    .desktop-nav-links {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .desktop-nav-link {
+        padding: 6px 14px;
+        border-radius: var(--radius-sm);
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: background 0.15s, color 0.15s;
+    }
+
+    .desktop-nav-link:hover {
+        background: var(--surface-2);
+        color: var(--text);
+        text-decoration: none;
+    }
+
+    .desktop-nav-link.active {
+        background: var(--accent-light);
+        color: var(--accent);
+    }
+
+    .desktop-nav-user {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-shrink: 0;
+    }
+
+    .desktop-nav-name {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+    }
+
+    .desktop-nav-logout {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 5px 10px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        transition: all 0.15s;
+    }
+
+    .desktop-nav-logout:hover {
+        color: var(--danger);
+        border-color: var(--danger);
+        background: var(--danger-light);
+        text-decoration: none;
+    }
+
+    /* Also add a log climb button in the nav */
+    .desktop-nav-cta {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--accent);
+        color: #fff;
+        font-size: 0.875rem;
+        font-weight: 600;
+        padding: 7px 16px;
+        border-radius: var(--radius-sm);
+        text-decoration: none;
+        transition: background 0.15s;
+    }
+
+    .desktop-nav-cta:hover {
+        background: var(--accent-strong);
+        color: #fff;
+        text-decoration: none;
+    }
+}
+
+/* ---- Bottom nav (mobile) ---- */
+
+.bottom-nav {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 16px 12px 90px 12px; /* extra bottom padding for nav bar */
+    }
+
     h1 { font-size: 1.5rem; }
-    .stats-grid { grid-template-columns: repeat(2, 1fr); }
-    .btn-row { flex-direction: column; }
-    .btn { justify-content: center; }
     .cover-image { height: 160px; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+
+    /* Hide desktop btn-row on mobile — nav handles it */
+    .btn-row { display: none; }
+
+    /* Show bottom nav on mobile */
+    .bottom-nav {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 64px;
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+        box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
+        z-index: 100;
+        align-items: center;
+        justify-content: space-around;
+        padding: 0 8px;
+    }
+
+    .bottom-nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        text-decoration: none;
+        color: var(--text-muted);
+        font-size: 0.65rem;
+        font-weight: 500;
+        flex: 1;
+        padding: 8px 4px;
+        transition: color 0.15s;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .bottom-nav-item:hover,
+    .bottom-nav-item.active {
+        color: var(--accent);
+        text-decoration: none;
+    }
+
+    .bottom-nav-icon {
+        font-size: 1.4rem;
+        line-height: 1;
+    }
+
+    /* Big center button */
+    .bottom-nav-center {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        text-decoration: none;
+        flex: 1;
+        padding: 4px;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .bottom-nav-center-btn {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.6rem;
+        box-shadow: 0 4px 12px rgba(79,110,247,0.4);
+        margin-top: -16px;
+        transition: background 0.15s, transform 0.1s;
+    }
+
+    .bottom-nav-center-btn:active {
+        transform: scale(0.95);
+        background: var(--accent-strong);
+    }
+
+    .bottom-nav-center-label {
+        font-size: 0.65rem;
+        font-weight: 500;
+        color: var(--accent);
+        margin-top: 2px;
+    }
+
+    /* Bigger tap targets on cards */
+    .card {
+        padding: 14px 16px;
+    }
+
+    .card-actions {
+        gap: 20px;
+    }
+
+    .card-action-btn {
+        padding: 6px 0 !important;
+        font-size: 0.875rem !important;
+    }
+
+    /* Auth pages */
+    .auth-container {
+        margin-top: 20px;
+    }
+
+    /* Top nav smaller on mobile */
+    .top-nav {
+        margin-bottom: 12px;
+    }
+
+    /* Stats card */
+    .stats-card {
+        padding: 16px;
+    }
+
+    /* Trends grid wraps nicely */
+    .trends-grid {
+        gap: 16px;
+    }
+
+    /* Weekly plan full width */
+    .week-day {
+        padding: 12px 14px;
+    }
+
+    /* Chart cards */
+    .chart-card canvas {
+        max-height: 180px;
+    }
+
+    /* Story hero */
+    .story-title {
+        font-size: 1.5rem;
+    }
+
+    /* User nav */
+    .user-nav {
+        margin-bottom: 8px;
+    }
+}
+
+/* ---- Desktop layout enhancements ---- */
+
+@media (min-width: 769px) {
+    /* Bottom nav hidden on desktop */
+    .bottom-nav { display: none; }
+
+    /* Two-column card grid on dashboard */
+    .card-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    /* Wider stats grid */
+    .stats-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
+
+    /* Side-by-side trends */
+    .trends-grid {
+        gap: 32px;
+    }
+
+    /* Chart side by side */
+    .chart-pair {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
 }

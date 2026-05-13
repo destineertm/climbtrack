@@ -443,12 +443,30 @@ def home():
         'streak': streak,
     }
 
+    # --- Climb of the Month ---
+    cotm = None
+    this_month_sends = [
+        c for c in this_month_climbs
+        if c.result in SEND_RESULTS and c.grade and c.discipline
+    ]
+    if this_month_sends:
+        # Score: grade rank * 100 - attempts (harder grade + fewer attempts = better)
+        result_bonus = {'onsight': 300, 'flash': 200, 'send': 100}
+        def cotm_score(c):
+            rank = GRADE_RANK.get((c.discipline, c.grade), 0)
+            bonus = result_bonus.get(c.result, 0)
+            attempts_penalty = c.attempts or 1
+            return (rank * 100) + bonus - attempts_penalty
+        cotm = max(this_month_sends, key=cotm_score)
+
     return render_template(
         "index.html",
         sessions=sessions,
         session_stats=session_stats,
         all_time=all_time,
         trends=trends,
+        cotm=cotm,
+        result_labels=RESULT_LABELS,
     )
 
 
