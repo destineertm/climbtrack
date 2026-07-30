@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>ClimbTrack – Gyms</title>
+    <title>ClimbTrack – Edit Profile</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -12,13 +12,13 @@
             <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect width="32" height="32" rx="8" fill="#1e2820"/>
                 <path d="M8 24 L14 12 L20 18 L24 10" stroke="#4e8c5a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-                <circle cx="24" cy="10" r="2.5" fill="white"/>
+                <circle cx="24" cy="10" r="2.5" fill="#4e8c5a"/>
             </svg>
             <span class="desktop-nav-wordmark">ClimbTrack</span>
         </a>
         <nav class="desktop-nav-links">
             <a href="/" class="desktop-nav-link">Home</a>
-            <a href="/gyms" class="desktop-nav-link active">Sessions</a>
+            <a href="/gyms" class="desktop-nav-link">Sessions</a>
             <a href="/projects" class="desktop-nav-link">Projects</a>
             <a href="/insights" class="desktop-nav-link">Insights</a>
             <a href="/training" class="desktop-nav-link">Training</a>
@@ -30,41 +30,35 @@
         </div>
     </header>
 
-    <nav class="top-nav"><a href="/">← Dashboard</a></nav>
+    <nav class="top-nav"><a href="/profile">← Back to Profile</a></nav>
 
-    <h1>Gyms & Crags</h1>
+    <h1>Edit Profile</h1>
 
-    {% if gym_data %}
-    <div class="gym-grid">
-        {% for d in gym_data %}
-        <a href="/gym/{{ d.gym.id }}" class="gym-card">
-            {% if d.gym.image_filename %}
-            <img src="{{ url_for('static', filename='uploads/' + d.gym.image_filename) }}"
-                 alt="{{ d.gym.name }}" class="gym-card-image">
-            {% endif %}
-            <div class="gym-card-body">
-                <h3>{{ d.gym.name }}</h3>
-                <p class="muted">{% if d.gym.is_outdoor %}⛰️ Outdoor{% else %}🏢 Indoor{% endif %}</p>
-                <div class="mini-stats">
-                    <span>{{ d.session_count }} session{% if d.session_count != 1 %}s{% endif %}</span>
-                    <span>·</span>
-                    <span>{{ d.climb_count }} climb{% if d.climb_count != 1 %}s{% endif %}</span>
-                    <span>·</span>
-                    <span>{{ d.send_count }} send{% if d.send_count != 1 %}s{% endif %}</span>
-                </div>
-                {% if d.last_visit %}
-                <p class="muted">Last visit: {{ d.last_visit.strftime('%b %d, %Y') }}</p>
-                {% endif %}
+    <form method="POST" enctype="multipart/form-data">
+
+        <div class="field">
+            <label>Profile Photo</label>
+            {% if current_user.profile_photo %}
+            <img src="{{ url_for('static', filename='uploads/' + current_user.profile_photo) }}"
+                 alt="Current photo"
+                 style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; display: block; margin-bottom: 12px; border: 2px solid var(--border);">
+            {% else %}
+            <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 2rem; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+                {{ current_user.display_name[0].upper() }}
             </div>
-        </a>
-        {% endfor %}
-    </div>
-    {% else %}
-        <div class="empty-state">
-            <div class="empty-state-icon">🏢</div>
-            <p>No gyms yet. Start a session to add one!</p>
+            {% endif %}
+            <input type="file" name="profile_photo" accept="image/*">
+            <p class="muted" style="margin-top: 6px;">JPG, PNG or WEBP.</p>
         </div>
-    {% endif %}
+
+        <div class="field">
+            <label>Display Name</label>
+            <input type="text" name="display_name" value="{{ current_user.display_name }}" required>
+        </div>
+
+        <button type="submit">Save Changes</button>
+
+    </form>
 
     <!-- Bottom nav (mobile) -->
     <nav class="bottom-nav">
@@ -72,7 +66,7 @@
             <span class="bottom-nav-icon">🏠</span>
             <span>Home</span>
         </a>
-        <a href="/gyms" class="bottom-nav-item active">
+        <a href="/gyms" class="bottom-nav-item">
             <span class="bottom-nav-icon">📋</span>
             <span>Sessions</span>
         </a>

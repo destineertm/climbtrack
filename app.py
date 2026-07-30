@@ -82,11 +82,12 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(150), unique=True, nullable=False)
     display_name = db.Column(db.String(100), nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
+    profile_photo = db.Column(db.String(200))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     sessions = db.relationship('Session', backref='user', lazy=True)
 
     def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+        self.password_hash = generate_password_hash(password, method='pbkdf2:sha256')
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
@@ -504,6 +505,56 @@ def new_session():
     return render_template("new_session.html", existing_gyms=existing_gyms)
 
 
+@app.route("/profile/edit", methods=["GET", "POST"])
+@login_required
+def edit_profile():
+    if request.method == "POST":
+        display_name = request.form.get("display_name", "").strip()
+        if display_name:
+            current_user.display_name = display_name
+        photo = request.files.get("profile_photo")
+        filename = save_upload(photo)
+        if filename:
+            current_user.profile_photo = filename
+        db.session.commit()
+        return redirect("/profile")
+    return render_template("edit_profile.html")
+
+
+@app.route("/profile")
+@login_required
+def profile():
+    all_climbs = Climb.query.join(Session).all()
+    all_sessions = Session.query.order_by(Session.date.desc()).all()
+    stats = compute_stats(all_climbs)
+    stats['total_sessions'] = len(all_sessions)
+
+    # Favorite gym (most sessions)
+    gym_counts = {}
+    for s in all_sessions:
+        if s.gym:
+            gym_counts[s.gym.name] = gym_counts.get(s.gym.name, 0) + 1
+    favorite_gym = max(gym_counts, key=gym_counts.get) if gym_counts else None
+
+    # Active projects
+    active_projects = Route.query.filter_by(is_project=True).filter(
+        Route.climbs.any()
+    ).all()
+    active_projects = [r for r in active_projects if not any(c.result in SEND_RESULTS for c in r.climbs)]
+
+    # Member since
+    member_since = current_user.created_at.strftime('%B %Y') if current_user.created_at else 'Unknown'
+
+    return render_template(
+        "profile.html",
+        stats=stats,
+        favorite_gym=favorite_gym,
+        active_projects=active_projects[:3],
+        member_since=member_since,
+        result_labels=RESULT_LABELS,
+    )
+
+
 @app.route("/session/<int:session_id>")
 @login_required
 def view_session(session_id):
@@ -515,6 +566,39 @@ def view_session(session_id):
         result_labels=RESULT_LABELS,
         stats=stats
     )
+
+
+@app.route("/session/<int:session_id>/edit", methods=["GET", "POST"])
+@login_required
+def edit_session(session_id):
+    session = Session.query.get_or_404(session_id)
+    if request.method == "POST":
+        gym_name = request.form.get("gym_name", "").strip()
+        session_type = request.form.get("session_type", "indoor")
+        if session_type not in ("indoor", "outdoor"):
+            session_type = "indoor"
+        notes = request.form.get("notes", "").strip() or None
+        gym = find_or_create_gym(gym_name, is_outdoor=(session_type == "outdoor"))
+        session.gym_id = gym.id if gym else session.gym_id
+        session.location = gym.name if gym else gym_name
+        session.session_type = session_type
+        session.notes = notes
+        db.session.commit()
+        return redirect(f"/session/{session_id}")
+    existing_gyms = Gym.query.order_by(Gym.name).all()
+    return render_template("edit_session.html", session=session, existing_gyms=existing_gyms)
+
+
+@app.route("/session/<int:session_id>/delete", methods=["POST"])
+@login_required
+def delete_session(session_id):
+    session = Session.query.get_or_404(session_id)
+    # Delete all climbs in the session first
+    for climb in session.climbs:
+        db.session.delete(climb)
+    db.session.delete(session)
+    db.session.commit()
+    return redirect("/")
 
 
 @app.route("/route/<int:route_id>")
@@ -542,7 +626,8 @@ def view_route(route_id):
     # Days between first and most recent session (project duration)
     days_worked = None
     if len(climbs) >= 2:
-        days_worked = (climbs[-1].session.date - climbs[0].session.date).days
+        dates = [c.session.date for c in climbs]
+        days_worked = abs((max(dates) - min(dates)).days)
 
     return render_template(
         "route_detail.html",
@@ -574,7 +659,8 @@ def route_story(route_id):
             break
     days_on_route = None
     if len(climbs) >= 2:
-        days_on_route = (climbs[-1].session.date - climbs[0].session.date).days
+        dates = [c.session.date for c in climbs]
+        days_on_route = abs((max(dates) - min(dates)).days)
 
     return render_template(
         "route_story.html",

@@ -25,7 +25,7 @@
         </nav>
         <div class="desktop-nav-user">
             <a href="/session/new" class="desktop-nav-cta">+ Log Climb</a>
-            <span class="desktop-nav-name">{{ current_user.display_name }}</span>
+            <a href="/profile" class="desktop-nav-name" style="text-decoration:none;">{{ current_user.display_name }}</a>
             <a href="/logout" class="desktop-nav-logout">Log out</a>
         </div>
     </header>
@@ -59,12 +59,12 @@
                 <div class="stat-label">Attempts</div>
             </div>
             <div class="stat">
-                <div class="stat-value">
+                <div class="stat-value stat-value-sm">
                     {% if best_result and best_result != 'attempt' %}
-                        {{ result_labels[best_result].split(' ')[0] }}
+                        {{ result_labels[best_result] }}
                     {% else %}—{% endif %}
                 </div>
-                <div class="stat-label">Best</div>
+                <div class="stat-label">Best Attempt</div>
             </div>
             {% if days_worked is not none %}
             <div class="stat">

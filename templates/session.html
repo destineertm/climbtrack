@@ -25,7 +25,7 @@
         </nav>
         <div class="desktop-nav-user">
             <a href="/session/new" class="desktop-nav-cta">+ Log Climb</a>
-            <span class="desktop-nav-name">{{ current_user.display_name }}</span>
+            <a href="/profile" class="desktop-nav-name" style="text-decoration:none;">{{ current_user.display_name }}</a>
             <a href="/logout" class="desktop-nav-logout">Log out</a>
         </div>
     </header>
@@ -72,6 +72,10 @@
 
     <div class="btn-row">
         <a href="/session/{{ session.id }}/add" class="btn">+ Log a Climb</a>
+        <a href="/session/{{ session.id }}/edit" class="btn btn-secondary">Edit Session</a>
+        <form method="POST" action="/session/{{ session.id }}/delete" style="display:inline" onsubmit="return confirm('Delete this entire session and all its climbs?');">
+            <button type="submit" class="btn btn-danger">Delete Session</button>
+        </form>
     </div>
 
     <hr>
