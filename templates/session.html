@@ -73,7 +73,7 @@
     <div class="btn-row">
         <a href="/session/{{ session.id }}/add" class="btn">+ Log a Climb</a>
         <a href="/session/{{ session.id }}/edit" class="btn btn-secondary">Edit Session</a>
-        <form method="POST" action="/session/{{ session.id }}/delete" style="display:inline" onsubmit="return confirm('Delete this entire session and all its climbs?');">
+        <form method="POST" action="/session/{{ session.id }}/delete" style="display:contents" onsubmit="return confirm('Delete this entire session and all its climbs?');">
             <button type="submit" class="btn btn-danger">Delete Session</button>
         </form>
     </div>
